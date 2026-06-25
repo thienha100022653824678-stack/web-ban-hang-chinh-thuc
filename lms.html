@@ -1,0 +1,1816 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Học Nấu Ăn Online - Giáo Trình Dạy Nghề Chuyên Nghiệp</title>
+
+  <!-- Google Fonts & Identity SDK -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800;900&family=Playfair+Display:ital,wght@0,600;0,700;0,800;1,600&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://accounts.google.com/gsi/client"></script>
+
+  <!-- Tailwind Configuration for Theme Colors -->
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brandCream: '#FCF8F2',
+            brandGreen: '#2A4B2A',
+            brandGreenLight: '#3E6B3E',
+            brandBrown: '#2D1914',
+            brandOrange: '#D96B27',
+            brandGray: '#F5EFEB',
+          },
+          fontFamily: {
+            sans: ['"Be Vietnam Pro"', 'sans-serif'],
+            serif: ['"Playfair Display"', 'serif'],
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    /* Custom CSS tweaks to build a premium, warm, culinary-themed look */
+    body {
+      background-color: #FCF8F2;
+      color: #2D1914;
+      font-family: "Be Vietnam Pro", sans-serif;
+    }
+    
+    .serif-title {
+      font-family: "Playfair Display", serif;
+    }
+
+    /* Elegant custom scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #FCF8F2;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #D5C7B7;
+      border-radius: 999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #BCAE9E;
+    }
+
+    /* Watermark container and positioning */
+    .watermark-overlay {
+      position: absolute;
+      z-index: 40;
+      pointer-events: none;
+      color: rgba(255, 255, 255, 0.22);
+      font-weight: 700;
+      font-size: 11px;
+      white-space: nowrap;
+      text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.4);
+      transition: all 0.5s ease-in-out;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+    @media (min-width: 640px) {
+      .watermark-overlay {
+        font-size: 14px;
+      }
+    }
+
+    /* Recipe text content rendering tags styling */
+    .recipe-render h3 {
+      font-size: 1.25rem;
+      font-weight: 800;
+      color: #2A4B2A;
+      margin-top: 1.5rem;
+      margin-bottom: 0.75rem;
+      border-left: 4px solid #D96B27;
+      padding-left: 0.5rem;
+    }
+    .recipe-render h4 {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: #2D1914;
+      margin-top: 1.25rem;
+      margin-bottom: 0.5rem;
+    }
+    .recipe-render p {
+      margin-bottom: 0.75rem;
+      line-height: 1.7;
+      color: #4A3E3B;
+    }
+    .recipe-render ul {
+      list-style-type: none;
+      padding-left: 0;
+      margin-bottom: 1.25rem;
+    }
+    .recipe-render li {
+      position: relative;
+      padding-left: 1.25rem;
+      margin-bottom: 0.5rem;
+      line-height: 1.6;
+      color: #4A3E3B;
+    }
+    .recipe-render li::before {
+      content: "•";
+      position: absolute;
+      left: 0.25rem;
+      color: #D96B27;
+      font-weight: bold;
+    }
+    .recipe-render a {
+      color: #2563eb;
+      font-weight: 700;
+      text-decoration: underline;
+      text-underline-offset: 2px;
+      word-break: break-word;
+    }
+    .recipe-render a:hover {
+      color: #1d4ed8;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col selection:bg-brandOrange selection:text-white">
+
+  <!-- HOME VIEW CONTAINER -->
+  <div id="homeView" class="flex-grow flex flex-col">
+    <!-- Header -->
+    <header class="bg-white/95 backdrop-blur-md sticky top-0 z-50 border-b border-brandBrown/5 shadow-sm">
+      <div class="max-w-6xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
+        <!-- Brand Logo -->
+        <div class="flex items-center gap-2.5">
+          <span class="text-3xl">🍳</span>
+          <span id="siteTitle" class="font-extrabold tracking-tight text-xl text-brandGreen">Culinary Academy</span>
+          <select id="lmsCourseSwitcher" onchange="switchLmsCourse(this.value)" class="hidden ml-4 px-3 py-1.5 bg-brandGray border border-brandBrown/10 rounded-xl text-xs font-bold text-brandGreen outline-none cursor-pointer"></select>
+        </div>
+
+        <!-- Auth Area -->
+        <div id="loginArea">
+          <!-- Default State: Loading / Empty button placeholder -->
+          <div id="googleBtn" class="min-h-[40px] flex items-center justify-end"></div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="relative bg-gradient-to-br from-[#FAF3EA] via-[#F8EFE4] to-white overflow-hidden py-12 md:py-20 border-b border-brandBrown/5">
+      <!-- Decorative vector lines -->
+      <div class="absolute inset-0 opacity-[0.03] pointer-events-none">
+        <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+              <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#2D1914" stroke-width="1"/>
+            </pattern>
+          </defs>
+          <rect width="100%" height="100%" fill="url(#grid)" />
+        </svg>
+      </div>
+
+      <div class="max-w-6xl mx-auto px-4 sm:px-6 relative z-10 grid md:grid-cols-12 gap-8 md:gap-12 items-center">
+        <!-- Content -->
+        <div class="md:col-span-7 flex flex-col items-start text-left">
+          <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brandGreen/10 text-brandGreen font-bold text-xs uppercase tracking-wider mb-6">
+            <span>🎓</span> Học Nghề Online Cao Cấp
+          </div>
+          <h1 id="courseTitle" class="serif-title text-4xl sm:text-5xl md:text-6xl font-black tracking-tight text-brandBrown leading-tight sm:leading-none mb-4">
+            Khóa Học Nấu Ăn <br><span class="text-brandOrange font-serif italic font-normal">Chuyên Nghiệp</span>
+          </h1>
+          <p id="courseSubtitle" class="text-base sm:text-lg text-brandGreen font-semibold mb-6 max-w-xl">
+            Lấy dữ liệu bài học thực tế, học tập bài bản, thao tác cực chuẩn cùng giảng viên.
+          </p>
+
+          <div class="space-y-3 mb-8 text-sm sm:text-base font-medium text-brandBrown/80">
+            <div class="flex items-center gap-3">
+              <span class="w-5 h-5 rounded-full bg-brandGreen text-white flex items-center justify-center text-xs font-bold">✓</span>
+              <span>Video bài giảng trực quan, sắc nét và cô đọng</span>
+            </div>
+            <div class="flex items-center gap-3">
+              <span class="w-5 h-5 rounded-full bg-brandGreen text-white flex items-center justify-center text-xs font-bold">✓</span>
+              <span>Định lượng công thức chuẩn xác, dễ dàng nhân bản</span>
+            </div>
+            <div class="flex items-center gap-3">
+              <span class="w-5 h-5 rounded-full bg-brandGreen text-white flex items-center justify-center text-xs font-bold">✓</span>
+              <span>Bí quyết xử lý nguyên liệu, tối ưu chi phí</span>
+            </div>
+          </div>
+
+          <button onclick="scrollToLessons()" class="px-8 py-4 bg-brandGreen hover:bg-brandGreenLight text-white rounded-xl font-bold text-base shadow-lg shadow-brandGreen/25 hover:shadow-brandGreen/35 transition duration-200 inline-flex items-center gap-3 group">
+            BẮT ĐẦU HỌC NGAY
+            <span class="bg-white/20 rounded-full w-6 h-6 flex items-center justify-center group-hover:translate-x-1 transition-transform">→</span>
+          </button>
+        </div>
+
+        <!-- Hero Image Card -->
+        <div class="md:col-span-5 relative">
+          <div class="absolute -inset-1.5 bg-gradient-to-r from-brandOrange to-brandGreen rounded-3xl blur opacity-20"></div>
+          <div class="relative bg-white p-3 rounded-2xl shadow-xl border border-brandBrown/5">
+            <img id="heroImage" class="w-full aspect-[4/3] object-cover rounded-xl shadow-inner bg-brandGray opacity-0 transition-opacity duration-300" src="" alt="Banners">
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Main Course Contents -->
+    <main id="lessonsSection" class="max-w-6xl mx-auto px-4 sm:px-6 py-12 flex-grow w-full">
+      <div class="text-center max-w-2xl mx-auto mb-10">
+        <h2 class="serif-title text-3xl sm:text-4xl font-black tracking-tight text-brandBrown mb-2">🌾 Danh Sách Bài Học 🌾</h2>
+        <p id="lessonCount" class="text-sm sm:text-base text-brandBrown/65 font-medium">Đăng nhập Gmail để truy cập bài học của bạn</p>
+      </div>
+
+      <!-- Unauthorized status / Prompt login -->
+      <div id="statusBox" class="bg-white border border-brandBrown/10 rounded-2xl p-8 text-center max-w-xl mx-auto shadow-md">
+        <div class="text-4xl mb-4">🔑</div>
+        <p class="font-extrabold text-lg sm:text-xl text-brandBrown mb-2">Vui lòng đăng nhập Gmail</p>
+        <p class="text-brandBrown/60 text-sm">Hệ thống sẽ tự động kiểm tra quyền học dựa trên tài khoản Gmail đã đăng ký khóa học này.</p>
+      </div>
+
+      <!-- Lessons Grid/List for Desktop / List with pagination for Mobile -->
+      <div id="lessonList" class="space-y-6 hidden">
+        <!-- Appended by JavaScript -->
+      </div>
+    </main>
+  </div>
+
+  <!-- MOBILE DETAILED LESSON PAGE CONTAINER -->
+  <section id="mobileLessonPage" class="hidden min-h-screen bg-brandCream flex flex-col">
+    <!-- Back Header -->
+    <div class="bg-white border-b border-brandBrown/5 py-4 px-4 sticky top-0 z-50 flex items-center justify-between gap-4">
+      <button class="w-10 h-10 rounded-full hover:bg-brandGray flex items-center justify-center text-brandGreen text-2xl font-bold" onclick="goHomeView()">
+        ‹
+      </button>
+      <div class="font-extrabold text-sm sm:text-base text-brandBrown truncate text-center flex-grow" id="mobileLessonHeaderTitle">
+        Chi tiết bài học
+      </div>
+      <div id="mobileLessonAuthIndicator" class="flex items-center gap-1.5 px-3 py-1 rounded-full bg-brandGreen/10 text-brandGreen font-bold text-xs truncate max-w-[120px]">
+        Gmail
+      </div>
+    </div>
+
+    <!-- Scrollable Detail Body -->
+    <div class="flex-grow overflow-y-auto px-4 py-5 max-w-xl mx-auto w-full">
+      <div class="text-xs text-brandOrange font-bold uppercase tracking-wider mb-1" id="mobileLessonSub">
+        BÀI 1
+      </div>
+      <h2 class="serif-title text-2xl font-extrabold text-brandBrown mb-4 leading-tight" id="mobileLessonTitle">
+        Tiêu đề bài học
+      </h2>
+
+      <!-- Video Container Box -->
+      <div class="bg-brandBrown rounded-2xl overflow-hidden aspect-video shadow-lg border border-brandBrown/10 relative flex flex-col items-stretch" id="mobileVideoBox">
+        <div id="mobileVideoWrapper" class="relative w-full h-full flex-grow flex items-center justify-center bg-black">
+          <!-- Play placeholder -->
+          <img id="mobileVideoThumb" class="absolute inset-0 w-full h-full object-cover opacity-75" src="" alt="Thumbnail">
+          <button class="relative z-10 w-16 h-16 rounded-full bg-brandGreen/90 hover:bg-brandGreen text-white text-2xl flex items-center justify-center shadow-lg transition transform active:scale-95" onclick="playMobileLessonVideo()">
+            ▶
+          </button>
+        </div>
+      </div>
+
+      <!-- Media Items Section (video phụ, YouTube, ảnh từ mediaUrls) -->
+      <div id="mediaItemsSection" class="hidden mt-6"></div>
+
+      <!-- Recipe Content Box -->
+      <div class="mt-6 bg-white border border-brandBrown/5 rounded-2xl p-5 shadow-sm">
+        <div class="flex items-center justify-between border-b border-brandGray pb-3 mb-4">
+          <span class="font-black text-brandGreen text-base flex items-center gap-2">
+            <span>📄</span> CÔNG THỨC CHI TIẾT
+          </span>
+        </div>
+        <div id="recipeContent" class="recipe-render text-sm sm:text-base overflow-hidden transition-all duration-300 max-h-[380px] relative">
+          <!-- Loaded by JS -->
+        </div>
+        <button id="recipeMoreBtn" class="mt-4 w-full py-2.5 bg-brandCream hover:bg-brandGray text-brandGreen font-bold text-sm rounded-xl transition duration-150 flex items-center justify-center gap-1.5" onclick="toggleRecipeMore()">
+          Xem thêm <span>▼</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Navigation Bar at Bottom -->
+    <div class="bg-white border-t border-brandBrown/5 py-4 px-4 sticky bottom-0 z-30 flex items-center justify-between gap-4">
+      <button class="flex-1 py-3.5 border border-brandGreen/35 hover:bg-brandCream text-brandGreen font-bold text-sm rounded-xl transition" onclick="openPrevLesson()">
+        ← Bài Trước
+      </button>
+      <button class="flex-1 py-3.5 bg-brandGreen hover:bg-brandGreenLight text-white font-bold text-sm rounded-xl shadow-md shadow-brandGreen/10 transition" onclick="openNextLesson()">
+        Bài Tiếp Theo →
+      </button>
+    </div>
+  </section>
+
+  <!-- DESKTOP VIDEO MODAL -->
+  <div id="videoModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden items-center justify-center p-4">
+    <div class="w-full max-w-4xl bg-brandCream rounded-2xl overflow-hidden shadow-2xl border border-white/10 flex flex-col">
+      <!-- Modal Header -->
+      <div class="px-6 py-4 bg-white border-b border-brandBrown/5 flex items-center justify-between">
+        <h3 id="modalTitle" class="font-extrabold text-brandBrown text-base sm:text-lg truncate">Video bài học</h3>
+        <button onclick="closeVideo()" class="px-4 py-2 bg-brandGray hover:bg-brandBrown/10 text-brandBrown rounded-lg font-bold text-xs transition">
+          Đóng ✕
+        </button>
+      </div>
+      <!-- Video Frame Container -->
+      <div class="aspect-video bg-black relative flex items-center justify-center" id="desktopVideoContainer">
+        <!-- Iframe or Block Warning goes here -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="bg-white border-t border-brandBrown/5 py-6 mt-auto text-center text-xs sm:text-sm text-brandBrown/50 font-medium">
+    <div class="max-w-6xl mx-auto px-4">
+      <p>© 2026 Culinary Academy. Bảo lưu mọi quyền.</p>
+    </div>
+  </footer>
+
+  <!-- SCRIPT LOGIC -->
+  <script>
+    // Configuration values derived from URL query parameters and local storage
+    const COURSE = new URLSearchParams(window.location.search).get("course") || "banh-mi";
+    function switchLmsCourse(slug) {
+      if (!slug) return;
+      window.location.href = `?course=${encodeURIComponent(slug)}`;
+    }
+    const SESSION_KEY = `course_session_token_${COURSE}`;
+    const SESSION_EMAIL_KEY = `course_session_email_${COURSE}`;
+    const SESSION_EXP_KEY = `course_session_exp_${COURSE}`;
+    const SESSION_COOKIE = "course_session_token";
+    const API_VERSION = "premium-bunny-stream-v1";
+    const HERO_PLACEHOLDER_IMAGE = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 800 600'%3E%3Cdefs%3E%3ClinearGradient id='bg' x1='0' x2='1' y1='0' y2='1'%3E%3Cstop offset='0' stop-color='%23FCF8F2'/%3E%3Cstop offset='1' stop-color='%23DCE8D8'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='800' height='600' fill='url(%23bg)'/%3E%3Ccircle cx='650' cy='120' r='150' fill='%232A4B2A' opacity='.08'/%3E%3Ccircle cx='140' cy='500' r='190' fill='%23D96B27' opacity='.08'/%3E%3Cpath d='M160 385h480' stroke='%232A4B2A' stroke-width='18' stroke-linecap='round' opacity='.18'/%3E%3Cpath d='M220 315h360' stroke='%23D96B27' stroke-width='14' stroke-linecap='round' opacity='.2'/%3E%3Cpath d='M285 245h230' stroke='%232D1914' stroke-width='12' stroke-linecap='round' opacity='.12'/%3E%3C/svg%3E";
+
+    let currentLessons = [];
+    let currentView = "home";
+    let currentLessonIndex = 0;
+    
+    // Pagination parameters for Mobile Lesson Checklist
+    let currentPage = 0;
+    const MOBILE_PAGE_SIZE = 5;
+
+    // Extract Iframe Src (if any)
+    function extractIframeSrc(input) {
+      const text = String(input || "").trim();
+      const match = text.match(/<iframe[^>]+src=["']([^"']+)["']/i);
+      return match?.[1] ? match[1].trim() : text;
+    }
+
+    // ── Google Drive Helpers ───────────────────────────────────────────────
+    function getGoogleDriveFileId(input) {
+      const text = extractIframeSrc(String(input || "")).trim();
+      // /file/d/FILE_ID/...
+      let match = text.match(/drive\.google\.com\/file\/d\/([^/?#]+)/);
+      if (match) return match[1];
+      // ?id=FILE_ID or &id=FILE_ID (open?id=, uc?id=)
+      match = text.match(/[?&]id=([^&#]+)/);
+      if (match) return match[1];
+      return "";
+    }
+
+    function isGoogleDriveVideoUrl(input) {
+      const text = extractIframeSrc(String(input || "")).trim();
+      return (
+        text.includes("drive.google.com/file/d/") ||
+        /drive\.google\.com\/open\?id=/.test(text) ||
+        /drive\.google\.com\/uc\?id=/.test(text)
+      );
+    }
+
+    function normalizeGoogleDrivePreviewUrl(input) {
+      const fileId = getGoogleDriveFileId(input);
+      if (!fileId) return "";
+      return `https://drive.google.com/file/d/${fileId}/preview`;
+    }
+
+    function openDriveVideo(url) {
+      const previewUrl = normalizeGoogleDrivePreviewUrl(url) || url;
+      window.open(previewUrl, "_blank", "noopener,noreferrer");
+    }
+
+    // Extract YouTube Video ID
+    function getYouTubeVideoId(input) {
+      let text = extractIframeSrc(input).replace(/&amp;/g, "&").trim();
+      if (!text) return "";
+
+      try {
+        const parsed = new URL(text);
+        const host = parsed.hostname.replace(/^www\./, "");
+
+        if (host === "youtu.be") {
+          return parsed.pathname.split("/").filter(Boolean)[0] || "";
+        }
+
+        if (host === "youtube.com" || host === "m.youtube.com" || host === "youtube-nocookie.com") {
+          if (parsed.searchParams.get("v")) return parsed.searchParams.get("v");
+
+          const parts = parsed.pathname.split("/").filter(Boolean);
+          if (parts[0] === "embed" || parts[0] === "shorts" || parts[0] === "live") {
+            return parts[1] || "";
+          }
+        }
+      } catch (err) {}
+
+      // Fallback regex
+      const match = text.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/|live\/)|youtu\.be\/)([A-Za-z0-9_-]{11})/);
+      return match ? match[1] : "";
+    }
+
+    // Check if input is YouTube URL
+    function isYouTubeUrl(input) {
+      return Boolean(getYouTubeVideoId(input));
+    }
+
+    // Normalize YouTube Embed URL
+    function normalizeYouTubeEmbedUrl(input) {
+      const id = getYouTubeVideoId(input);
+      if (!id) return "";
+      return `https://www.youtube.com/embed/${id}?autoplay=1&rel=0&modestbranding=1&playsinline=1&controls=1`;
+    }
+
+    // Check for Cốc Cốc Browser
+    function isCocCocBrowser() {
+      const ua = String(navigator.userAgent || "").toLowerCase();
+      const vendor = String(navigator.vendor || "").toLowerCase();
+      return (
+        ua.includes("coc_coc_browser") ||
+        ua.includes("coccoc") ||
+        ua.includes("cocbrowser") ||
+        ua.includes("coc_coc") ||
+        vendor.includes("coccoc") ||
+        vendor.includes("coc coc")
+      );
+    }
+
+    // Check for Mobile devices based on width and UserAgent
+    function isMobileDevice() {
+      const ua = String(navigator.userAgent || "").toLowerCase();
+      const mobileUa = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(ua);
+      const isTouch = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+      return mobileUa && (window.innerWidth <= 1024 || isTouch);
+    }
+
+    // Single video URL accessor function (CRITICAL FOR BUNNY TOKEN PRESERVATION)
+    function lessonVideoUrl(lesson) {
+      const secure = lesson?.secureVideoUrl || "";
+      const raw = lesson?.videoUrl || "";
+
+      // Bunny: dùng secureVideoUrl
+      if (lesson?.videoProvider === "bunny_embed") {
+        return secure;
+      }
+
+      // YouTube: dùng embed YouTube
+      if (isYouTubeUrl(raw)) {
+        return normalizeYouTubeEmbedUrl(raw);
+      }
+
+      // Google Drive: dùng preview URL
+      if (lesson?.videoProvider === "google_drive_preview" || isGoogleDriveVideoUrl(raw)) {
+        const preview = normalizeGoogleDrivePreviewUrl(raw || secure);
+        if (preview) return preview;
+      }
+
+      // Còn lại: dùng secureVideoUrl || raw
+      return secure || raw;
+    }
+
+    function setHeroImageSource(src) {
+      const heroImage = document.getElementById("heroImage");
+      if (!heroImage) return;
+
+      heroImage.classList.add("opacity-0");
+      heroImage.onload = () => heroImage.classList.remove("opacity-0");
+      heroImage.onerror = () => {
+        if (heroImage.src !== HERO_PLACEHOLDER_IMAGE) {
+          heroImage.src = HERO_PLACEHOLDER_IMAGE;
+        }
+      };
+      heroImage.src = src || HERO_PLACEHOLDER_IMAGE;
+    }
+
+    async function refreshCourseDataBeforePlayIfNeeded(index) {
+      const lesson = currentLessons[index];
+      if (!lesson) return null;
+
+      // Only Bunny videos need token refresh
+      if (lesson.videoProvider !== "bunny_embed") {
+        return lesson;
+      }
+
+      const expiresAt = Number(lesson.secureVideoExpiresAt || 0);
+      const now = Math.floor(Date.now() / 1000);
+
+      if (expiresAt && expiresAt - now > 120 && lesson.secureVideoUrl) {
+        return lesson;
+      }
+
+      const sessionToken = getSavedSession();
+      if (!sessionToken) {
+        throw new Error("missing_session_token");
+      }
+
+      const response = await fetch("/api/lms/course-data", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          course: COURSE,
+          sessionToken
+        })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.allowed) {
+        throw new Error(data.error || "refresh_course_data_failed");
+      }
+
+      if (data.sessionToken) saveSession(data);
+
+      currentLessons = data.lessons || [];
+
+      const oldLessonNo = String(lesson.lesson || "");
+      const oldTitle = String(lesson.title || "");
+
+      const refreshedLesson =
+        currentLessons.find(l => String(l.lesson || "") === oldLessonNo) ||
+        currentLessons.find(l => String(l.title || "") === oldTitle) ||
+        currentLessons[index];
+
+      return refreshedLesson || null;
+    }
+
+    // Format cookietime
+    function setSessionCookie(token, expiresAt) {
+      if (!token) return;
+      let cookie = `${SESSION_COOKIE}=${encodeURIComponent(token)}; path=/; samesite=lax`;
+      if (expiresAt) cookie += `; expires=${new Date(Number(expiresAt)).toUTCString()}`;
+      if (location.protocol === "https:") cookie += "; secure";
+      document.cookie = cookie;
+    }
+
+    // Clear session cookies
+    function clearSessionCookie() {
+      document.cookie = `${SESSION_COOKIE}=; path=/; max-age=0; samesite=lax`;
+    }
+
+    // Scroll home page to lessons
+    function scrollToLessons() {
+      document.getElementById("lessonsSection").scrollIntoView({ behavior: "smooth" });
+    }
+
+    // Get cookie utility
+    function getSessionCookie() {
+      const cookies = document.cookie ? document.cookie.split(";") : [];
+      for (const cookie of cookies) {
+        const index = cookie.indexOf("=");
+        if (index === -1) continue;
+        const key = cookie.slice(0, index).trim();
+        const value = cookie.slice(index + 1).trim();
+        if (key === SESSION_COOKIE) return decodeURIComponent(value);
+      }
+      return null;
+    }
+
+    function clearSession() {
+      try {
+        localStorage.removeItem(SESSION_KEY);
+        localStorage.removeItem(SESSION_EMAIL_KEY);
+        localStorage.removeItem(SESSION_EXP_KEY);
+      } catch (err) {
+        console.warn("Session clean failed:", err);
+      }
+      clearSessionCookie();
+    }
+
+    function saveSession(data) {
+      try {
+        if (data && data.sessionToken) localStorage.setItem(SESSION_KEY, data.sessionToken);
+        if (data && data.email) localStorage.setItem(SESSION_EMAIL_KEY, data.email);
+        if (data && data.sessionExpiresAt) localStorage.setItem(SESSION_EXP_KEY, String(data.sessionExpiresAt));
+      } catch (err) {
+        console.warn("Session saving failed:", err);
+      }
+      if (data && data.sessionToken) setSessionCookie(data.sessionToken, data.sessionExpiresAt);
+    }
+
+    function getSavedSession() {
+      let token = null;
+      let exp = 0;
+      try {
+        token = localStorage.getItem(SESSION_KEY);
+        exp = Number(localStorage.getItem(SESSION_EXP_KEY) || 0);
+      } catch (err) {
+        console.warn("Reading session from localStorage failed:", err);
+        return getSessionCookie();
+      }
+      if (!token) return getSessionCookie();
+      if (exp && Date.now() > exp) {
+        clearSession();
+        return null;
+      }
+      return token;
+    }
+
+    function getSavedEmail() {
+      try {
+        return localStorage.getItem(SESSION_EMAIL_KEY) || "Học viên";
+      } catch(e) {
+        return "Học viên";
+      }
+    }
+
+    // Watermark dynamic text & position shifting logic
+    // Watermark dynamic text & position shifting logic
+    let watermarkTimer = null;
+    function createWatermark(containerEl, userEmail) {
+      if (!containerEl) return;
+
+      // Clear previous watermark timer for this specific container
+      if (containerEl.watermarkTimer) {
+        clearInterval(containerEl.watermarkTimer);
+        containerEl.watermarkTimer = null;
+      }
+
+      // Remove existing watermark overlays in container
+      const existing = containerEl.querySelectorAll('.watermark-overlay');
+      existing.forEach(el => el.remove());
+
+      if (!userEmail) return;
+
+      const watermark = document.createElement('div');
+      watermark.className = 'watermark-overlay';
+      
+      const courseName = document.getElementById("mobileLessonHeaderTitle").innerText || "Khóa Học";
+      
+      function updateWatermarkText() {
+        const now = new Date();
+        const timeStr = now.toLocaleDateString('vi-VN') + ' ' + String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
+        watermark.innerText = `${userEmail} • ${courseName} • ${timeStr}`;
+      }
+
+      const positions = [
+        { top: '10%', left: '10%', right: 'auto', bottom: 'auto', transform: 'none' },
+        { top: '10%', right: '10%', left: 'auto', bottom: 'auto', transform: 'none' },
+        { top: '50%', left: '50%', right: 'auto', bottom: 'auto', transform: 'translate(-50%, -50%)' },
+        { bottom: '15%', left: '10%', right: 'auto', top: 'auto', transform: 'none' },
+        { bottom: '15%', right: '10%', left: 'auto', top: 'auto', transform: 'none' }
+      ];
+
+      function rotatePosition() {
+        const rand = positions[Math.floor(Math.random() * positions.length)];
+        watermark.style.top = rand.top;
+        watermark.style.bottom = rand.bottom;
+        watermark.style.left = rand.left;
+        watermark.style.right = rand.right;
+        watermark.style.transform = rand.transform;
+        updateWatermarkText();
+      }
+
+      containerEl.appendChild(watermark);
+      rotatePosition();
+
+      // Rotate every 10 seconds, stored on the element itself
+      containerEl.watermarkTimer = setInterval(rotatePosition, 10000);
+    }
+
+    function destroyWatermark() {
+      const mainWrapper = document.getElementById("mobileVideoWrapper");
+      if (mainWrapper && mainWrapper.watermarkTimer) {
+        clearInterval(mainWrapper.watermarkTimer);
+        mainWrapper.watermarkTimer = null;
+      }
+      if (watermarkTimer) {
+        clearInterval(watermarkTimer);
+        watermarkTimer = null;
+      }
+    }
+
+    function clearWatermarkFrom(containerEl) {
+      if (!containerEl) return;
+      if (containerEl.watermarkTimer) {
+        clearInterval(containerEl.watermarkTimer);
+        containerEl.watermarkTimer = null;
+      }
+      containerEl.querySelectorAll(".watermark-overlay").forEach(el => el.remove());
+    }
+
+    function shouldShowWatermarkForLesson(lesson) {
+      return lesson?.videoProvider === "bunny_embed";
+    }
+
+    // Render blocking messages instead of triggering embed
+    function getCocCocBlockedHtml() {
+      return `
+        <div class="w-full h-full bg-[#1A0B08] p-6 flex flex-col items-center justify-center text-center text-white select-none">
+          <div class="text-4xl mb-3">⚠️</div>
+          <h4 class="font-extrabold text-base sm:text-lg text-brandOrange mb-2">Trình duyệt không được hỗ trợ</h4>
+          <p class="text-xs sm:text-sm text-white/70 max-w-sm leading-relaxed">
+            Trình duyệt Cốc Cốc không được hỗ trợ để xem video khóa học. Vui lòng mở bằng Safari hoặc Chrome trên điện thoại để học.
+          </p>
+        </div>
+      `;
+    }
+
+    function getPCBlockedHtml() {
+      return `
+        <div class="w-full h-full bg-[#172317] p-6 flex flex-col items-center justify-center text-center text-white select-none">
+          <div class="text-4xl mb-3">📱</div>
+          <h4 class="font-extrabold text-base sm:text-lg text-green-400 mb-2">Hạn Chế Thiết Bị</h4>
+          <p class="text-xs sm:text-sm text-white/70 max-w-sm leading-relaxed">
+            Video chỉ xem được trên điện thoại di động (Safari/Chrome). Bạn vẫn có thể xem công thức và danh sách bài học trên máy tính.
+          </p>
+        </div>
+      `;
+    }
+
+    function getIframePlayerHtml(url) {
+      const isDrive = url.includes("drive.google.com");
+      
+      if (isDrive) {
+        const previewUrl = normalizeGoogleDrivePreviewUrl(url) || url;
+        const fileId = getGoogleDriveFileId(url);
+        const returnUrl = window.location.origin + window.location.pathname + '?course=' + encodeURIComponent(COURSE) + '&lesson=' + currentLessonIndex;
+        const playerUrl = `/gdrive-player.html?id=${fileId}&returnUrl=${encodeURIComponent(returnUrl)}`;
+        return `
+          <div class="relative w-full h-full flex items-center justify-center bg-black">
+            <iframe
+              class="w-full h-full border-0 absolute inset-0 z-0 opacity-40"
+              src="${previewUrl}"
+              allow="autoplay; encrypted-media; picture-in-picture"
+              allowfullscreen
+              loading="lazy"
+              style="pointer-events: none;">
+            </iframe>
+            <div class="absolute inset-0 z-10 flex flex-col items-center justify-center text-center p-4 cursor-pointer" onclick="sessionStorage.setItem('courseReturnUrl', '${returnUrl}'); window.location.href='${playerUrl}'">
+              <div class="bg-brandGreen hover:bg-brandGreen/95 text-white font-extrabold text-base sm:text-lg px-6 py-3.5 rounded-full shadow-lg transition transform active:scale-95 mb-2.5">
+                ▶ Ấn vào đây để xem video
+              </div>
+              <div class="text-xs sm:text-sm text-white/90 font-bold tracking-wide">
+                Video sẽ mở bằng Google Drive
+              </div>
+            </div>
+          </div>
+        `;
+      }
+
+      return `
+        <iframe
+          class="w-full h-full border-0 absolute inset-0 z-10"
+          src="${url}"
+          allow="autoplay; encrypted-media; picture-in-picture"
+          allowfullscreen
+          referrerpolicy="origin"
+          loading="lazy">
+        </iframe>
+      `;
+    }
+
+    function getVideoExpiredHtml() {
+      return `
+        <div class="w-full h-full bg-[#172317] p-6 flex flex-col items-center justify-center text-center text-white select-none">
+          <div class="text-4xl mb-3">⚠️</div>
+          <p class="text-sm sm:text-base font-extrabold max-w-sm leading-relaxed">
+            Video đã hết phiên xem. Vui lòng tải lại trang rồi mở lại bài học.
+          </p>
+        </div>
+      `;
+    }
+
+    function findLessonIndex(lesson, fallbackIndex) {
+      if (!lesson) return fallbackIndex;
+
+      const directIndex = currentLessons.indexOf(lesson);
+      if (directIndex !== -1) return directIndex;
+
+      const lessonNo = String(lesson.lesson || "");
+      const title = String(lesson.title || "");
+
+      const matchedIndex = currentLessons.findIndex(l =>
+        (lessonNo && String(l.lesson || "") === lessonNo) ||
+        (title && String(l.title || "") === title)
+      );
+
+      return matchedIndex !== -1 ? matchedIndex : fallbackIndex;
+    }
+
+    function showMobileVideoExpiredMessage() {
+      const wrapper = document.getElementById("mobileVideoWrapper");
+      if (wrapper) {
+        wrapper.innerHTML = getVideoExpiredHtml();
+        return;
+      }
+
+      const videoBox = document.getElementById("mobileVideoBox");
+      if (videoBox) {
+        videoBox.innerHTML = `
+          <div id="mobileVideoWrapper" class="relative w-full h-full flex-grow flex items-center justify-center bg-black">
+            ${getVideoExpiredHtml()}
+          </div>
+        `;
+      }
+    }
+
+    // Show authentication state in UI
+    function showLoggedInState(email) {
+      const safeEmail = email || "";
+      const truncatedEmail = safeEmail.length > 20 ? safeEmail.substring(0, 18) + "..." : safeEmail;
+
+      const headerArea = document.getElementById("loginArea");
+      headerArea.innerHTML = `
+        <div class="flex items-center gap-3">
+          <div class="hidden sm:flex flex-col text-right">
+            <span class="text-xs font-black text-brandGreen">Đã đăng nhập</span>
+            <span class="text-xs text-brandBrown/60 font-semibold" title="${safeEmail}">${truncatedEmail}</span>
+          </div>
+          <div class="w-9 h-9 rounded-full bg-brandGreen text-white flex items-center justify-center font-black text-sm shadow-md" title="${safeEmail}">
+            ${safeEmail.charAt(0).toUpperCase()}
+          </div>
+          <button onclick="logoutGoogle()" class="px-3 py-1.5 bg-brandOrange/10 hover:bg-brandOrange/25 text-brandOrange font-bold text-xs rounded-lg transition">
+            Thoát
+          </button>
+        </div>
+      `;
+
+      // Update mobile details view header indicator
+      const mobileAuth = document.getElementById("mobileLessonAuthIndicator");
+      if (mobileAuth) {
+        mobileAuth.innerText = truncatedEmail;
+        mobileAuth.title = safeEmail;
+      }
+    }
+
+    function showLoggedOutState() {
+      const headerArea = document.getElementById("loginArea");
+      headerArea.innerHTML = `<div id="googleBtn" class="min-h-[40px] flex items-center justify-end"></div>`;
+      renderGoogleButton();
+
+      const mobileAuth = document.getElementById("mobileLessonAuthIndicator");
+      if (mobileAuth) {
+        mobileAuth.innerText = "Chưa đăng nhập";
+      }
+    }
+
+    // Main Google GSI Button render
+    function renderGoogleButton() {
+      const btnContainer = document.getElementById("googleBtn");
+      if (!btnContainer) return;
+      if (typeof google !== "undefined" && google.accounts && google.accounts.id) {
+        btnContainer.innerHTML = "";
+        google.accounts.id.renderButton(btnContainer, {
+          theme: "outline",
+          size: "medium",
+          text: "signin_with",
+          shape: "pill"
+        });
+      }
+    }
+
+    // Recipe rendering functions
+    function escapeHtml(text) {
+      return String(text || "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    function linkifyTextSafe(text) {
+      // Nhận diện http://, https://, www.
+      // Nhận diện các domain cụ thể: facebook.com, fb.com, shopee.vn, zalo.me, tiktok.com
+      const regex = /(https?:\/\/[^\s<>]+|www\.[^\s<>]+|(?:facebook\.com|fb\.com|shopee\.vn|zalo\.me|tiktok\.com)\/[^\s<>]*)/gi;
+      
+      return text.replace(regex, (match) => {
+        // Loại bỏ dấu câu ở cuối link nếu vô tình bắt trúng
+        let cleanUrl = match;
+        let suffix = "";
+        const puncMatch = match.match(/[.,;:?!]+$/);
+        if (puncMatch) {
+          cleanUrl = match.slice(0, -puncMatch[0].length);
+          suffix = puncMatch[0];
+        }
+
+        let href = cleanUrl;
+        if (/^www\./i.test(cleanUrl)) {
+          href = "https://" + cleanUrl;
+        } else if (!/^https?:\/\//i.test(cleanUrl)) {
+          href = "https://" + cleanUrl;
+        }
+        return `<a href="${href}" target="_blank" rel="noopener noreferrer">${cleanUrl}</a>${suffix}`;
+      });
+    }
+
+    function recipeTextToHtml(text) {
+      const lines = String(text || "").replace(/\r\n/g, "\n").split("\n");
+      const html = [];
+      let listOpen = false;
+
+      const closeList = () => {
+        if (listOpen) {
+          html.push("</ul>");
+          listOpen = false;
+        }
+      };
+
+      lines.forEach((rawLine) => {
+        const line = rawLine.trim();
+
+        if (!line) {
+          closeList();
+          return;
+        }
+
+        if (/^[-*•]\s+/.test(line)) {
+          if (!listOpen) {
+            html.push("<ul>");
+            listOpen = true;
+          }
+          const cleanText = escapeHtml(line.replace(/^[-*•]\s+/, ""));
+          html.push(`<li>${linkifyTextSafe(cleanText)}</li>`);
+          return;
+        }
+
+        closeList();
+
+        if (/^\d+[\).\s]/.test(line)) {
+          html.push(`<h4>${linkifyTextSafe(escapeHtml(line))}</h4>`);
+        } else if (line.length <= 80 && !/[.!?]$/.test(line)) {
+          html.push(`<h3>${linkifyTextSafe(escapeHtml(line))}</h3>`);
+        } else {
+          html.push(`<p>${linkifyTextSafe(escapeHtml(line))}</p>`);
+        }
+      });
+
+      closeList();
+      return html.join("");
+    }
+
+    function renderRecipeContent(lesson) {
+      if (lesson?.recipeText) {
+        return `<div class="recipe-content-html">${recipeTextToHtml(lesson.recipeText)}</div>`;
+      }
+      return `
+        <div class="text-brandOrange bg-brandOrange/5 p-4 rounded-xl text-center text-xs sm:text-sm font-semibold leading-relaxed border border-brandOrange/10">
+          Chưa tải được nội dung công thức. Vui lòng kiểm tra quyền chia sẻ file công thức cho service account.
+          ${lesson?.recipeTextError ? `<div class="text-[10px] text-brandBrown/50 mt-1">Lỗi: ${escapeHtml(lesson.recipeTextError)}</div>` : ''}
+        </div>
+      `;
+    }
+
+    // ── Parse mediaUrls ─────────────────────────────────────────────────────
+    // Format: "type|title|url\ntype|title|url\n..."
+    function parseMediaUrls(raw) {
+      if (!raw || typeof raw !== "string") return [];
+      return raw.split("\n")
+        .map(line => {
+          const trimmed = line.trim();
+          if (!trimmed) return null;
+          const firstPipe = trimmed.indexOf("|");
+          if (firstPipe === -1) return null;
+          const secondPipe = trimmed.indexOf("|", firstPipe + 1);
+          if (secondPipe === -1) return null;
+          const type  = trimmed.slice(0, firstPipe).trim();
+          const title = trimmed.slice(firstPipe + 1, secondPipe).trim();
+          const url   = trimmed.slice(secondPipe + 1).trim();
+          if (!type || !url) return null;
+          return { type, title, url };
+        })
+        .filter(Boolean);
+    }
+    // ── Render mediaUrls items below video ────────────────────────────────────
+    function renderMediaItems(lesson) {
+      const section = document.getElementById("mediaItemsSection");
+      if (!section) return;
+
+      // Dọn dẹp watermark của các container cũ để tránh rò rỉ timer
+      const oldContainers = section.querySelectorAll("[data-bunny-media-container]");
+      oldContainers.forEach(c => clearWatermarkFrom(c));
+
+      console.log("MEDIA_URLS_RAW", lesson?.mediaUrls);
+      const parsedItems = parseMediaUrls(lesson?.mediaUrls);
+      console.log("MEDIA_ITEMS", parsedItems);
+
+      if (parsedItems.length === 0) {
+        section.classList.add("hidden");
+        section.innerHTML = "";
+        return;
+      }
+
+      // Build HTML for each media item
+      const html = parsedItems.map(item => {
+        const safeTitle = escapeHtml(item.title || "");
+
+        if (item.type === "video") {
+          const rawUrl = item.url.trim();
+          
+          // Trích xuất src nếu là thẻ iframe và làm sạch &amp;
+          let url = rawUrl;
+          const iframeMatch = rawUrl.match(/<iframe[^>]+src=["']([^"']+)["']/i);
+          if (iframeMatch && iframeMatch[1]) {
+            url = iframeMatch[1];
+          }
+          url = url.replace(/&amp;/g, "&").trim();
+
+          // a0. Check error prefix from backend
+          if (url.startsWith("error:")) {
+            const errMsg = url.replace("error:", "");
+            return `
+              <div class="bg-red-50 text-red-700 border border-red-200 rounded-2xl p-4 mb-4 font-semibold text-sm flex items-center gap-2">
+                <span>⚠️</span> ${escapeHtml(errMsg)}
+              </div>`;
+          }
+
+          // a. YouTube
+          const ytId = getYouTubeVideoId(url);
+          if (ytId) {
+            const embedSrc = `https://www.youtube.com/embed/${ytId}?rel=0&modestbranding=1&playsinline=1&controls=1`;
+            return `
+              <div class="bg-white border border-brandBrown/5 rounded-2xl overflow-hidden shadow-sm mb-4">
+                ${safeTitle ? `<div class="px-4 pt-4 font-bold text-sm text-brandBrown">${safeTitle}</div>` : ""}
+                <div class="aspect-video relative">
+                  <iframe
+                    class="absolute inset-0 w-full h-full border-0"
+                    src="${escapeHtml(embedSrc)}"
+                    allow="autoplay; encrypted-media; picture-in-picture"
+                    allowfullscreen
+                    loading="lazy">
+                  </iframe>
+                </div>
+              </div>`;
+          }
+
+          // b. Google Drive file/open/uc
+          const driveFileMatch = url.match(/drive\.google\.com\/file\/d\/([^/?#]+)/);
+          const driveOpenMatch = url.match(/drive\.google\.com\/open\?id=([^&#]+)/) || url.match(/drive\.google\.com\/uc\?id=([^&#]+)/);
+          const driveId = (driveFileMatch ? driveFileMatch[1] : null) || (driveOpenMatch ? driveOpenMatch[1] : null);
+          if (driveId) {
+            const previewUrl = `https://drive.google.com/file/d/${driveId}/preview`;
+            const returnUrl = window.location.origin + window.location.pathname + '?course=' + encodeURIComponent(COURSE) + '&lesson=' + currentLessonIndex;
+            const playerUrl = `/gdrive-player.html?id=${driveId}&returnUrl=${encodeURIComponent(returnUrl)}`;
+            return `
+              <div class="bg-white border border-brandBrown/5 rounded-2xl overflow-hidden shadow-sm mb-4">
+                ${safeTitle ? `<div class="px-4 pt-4 font-bold text-sm text-brandBrown">${safeTitle}</div>` : ""}
+                <div class="aspect-video relative bg-black flex items-center justify-center">
+                  <iframe
+                    class="absolute inset-0 w-full h-full border-0 opacity-40"
+                    src="${previewUrl}"
+                    allow="autoplay; encrypted-media; picture-in-picture"
+                    allowfullscreen
+                    loading="lazy"
+                    style="pointer-events: none;">
+                  </iframe>
+                  <div class="absolute inset-0 z-10 flex flex-col items-center justify-center text-center p-4 cursor-pointer" onclick="sessionStorage.setItem('courseReturnUrl', '${returnUrl}'); window.location.href='${playerUrl}'">
+                    <div class="bg-brandGreen hover:bg-brandGreen/95 text-white font-extrabold text-xs sm:text-sm px-4 py-2.5 rounded-full shadow-md transition transform active:scale-95 mb-1.5 select-none">
+                      ▶ Ấn vào đây để xem video
+                    </div>
+                    <div class="text-[10px] sm:text-xs text-white/90 font-bold">
+                      Video sẽ mở bằng Google Drive
+                    </div>
+                  </div>
+                </div>
+              </div>`;
+          }
+
+          // c. Bunny (mediadelivery or bunnycdn)
+          const isBunny = url.includes("mediadelivery.net") || url.includes("bunnycdn.com");
+          if (isBunny) {
+            let src = url;
+            // Normalize player.mediadelivery.net → iframe.mediadelivery.net
+            src = src.replace(
+              /^https?:\/\/player\.mediadelivery\.net\//,
+              "https://iframe.mediadelivery.net/"
+            );
+            // Đảm bảo dạng embed
+            src = src.replace(
+              /^(https:\/\/iframe\.mediadelivery\.net\/)play\//,
+              "$1embed/"
+            );
+            const containerId = "bunny_media_" + Math.random().toString(36).substr(2, 9);
+            return `
+              <div class="bg-white border border-brandBrown/5 rounded-2xl overflow-hidden shadow-sm mb-4">
+                ${safeTitle ? `<div class="px-4 pt-4 font-bold text-sm text-brandBrown">${safeTitle}</div>` : ""}
+                <div id="${containerId}" class="aspect-video relative" data-bunny-media-container>
+                  <iframe
+                    class="absolute inset-0 w-full h-full border-0"
+                    src="${escapeHtml(src)}"
+                    allow="autoplay; encrypted-media; picture-in-picture"
+                    allowfullscreen
+                    referrerpolicy="origin"
+                    loading="lazy">
+                  </iframe>
+                </div>
+                <div data-bunny-warning class="hidden p-3 bg-brandOrange/5 border-t border-brandOrange/10 text-brandOrange text-[11px] font-semibold flex items-center gap-1.5">
+                  ⚠️ Video Bunny chưa phát được? Kiểm tra token, expires hoặc Allowed Referrers trong Bunny.
+                </div>
+              </div>`;
+          }
+
+          // d. Link ảnh
+          const isImage = /\.(jpg|jpeg|png|webp|gif|svg)(?:\?.*)?$/i.test(url) || url.startsWith("data:image/");
+          if (isImage) {
+            return `
+              <div class="bg-white border border-brandBrown/5 rounded-2xl overflow-hidden shadow-sm mb-4">
+                ${safeTitle ? `<div class="px-4 pt-4 font-bold text-sm text-brandBrown">${safeTitle}</div>` : ""}
+                <div class="p-4">
+                  <img
+                    src="${escapeHtml(url)}"
+                    alt="${safeTitle}"
+                    class="w-full rounded-xl object-contain max-h-[400px] border border-brandBrown/5"
+                    loading="lazy"
+                  />
+                </div>
+              </div>`;
+          }
+
+          // e. Khác (Mở tài liệu/video)
+          return `
+            <div class="bg-white border border-brandBrown/5 rounded-2xl overflow-hidden shadow-sm p-4 mb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <div class="font-bold text-sm text-brandBrown">${safeTitle || "Tài liệu đính kèm"}</div>
+                <div class="text-xs text-brandBrown/50 truncate max-w-[300px] sm:max-w-[400px] mt-0.5">${escapeHtml(url)}</div>
+              </div>
+              <a
+                href="${escapeHtml(url)}"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="px-4 py-2 bg-brandGreen hover:bg-brandGreen/90 text-white font-bold text-xs rounded-xl shadow-sm text-center transition flex-shrink-0"
+              >
+                Mở tài liệu/video ↗
+              </a>
+            </div>`;
+        }
+
+        if (item.type === "youtube") {
+          const rawUrl = item.url.trim();
+          let url = rawUrl;
+          const iframeMatch = rawUrl.match(/<iframe[^>]+src=["']([^"']+)["']/i);
+          if (iframeMatch && iframeMatch[1]) {
+            url = iframeMatch[1];
+          }
+          url = url.replace(/&amp;/g, "&").trim();
+
+          const ytId = getYouTubeVideoId(url);
+          if (!ytId) return "";
+          const embedSrc = `https://www.youtube.com/embed/${ytId}?rel=0&modestbranding=1&playsinline=1&controls=1`;
+          return `
+            <div class="bg-white border border-brandBrown/5 rounded-2xl overflow-hidden shadow-sm mb-4">
+              ${safeTitle ? `<div class="px-4 pt-4 font-bold text-sm text-brandBrown">${safeTitle}</div>` : ""}
+              <div class="aspect-video relative">
+                <iframe
+                  class="absolute inset-0 w-full h-full border-0"
+                  src="${escapeHtml(embedSrc)}"
+                  allow="autoplay; encrypted-media; picture-in-picture"
+                  allowfullscreen
+                  loading="lazy">
+                </iframe>
+              </div>
+            </div>`;
+        }
+
+        if (item.type === "image") {
+          const rawUrl = item.url.trim();
+          let imgSrc = rawUrl;
+          const iframeMatch = rawUrl.match(/<iframe[^>]+src=["']([^"']+)["']/i);
+          if (iframeMatch && iframeMatch[1]) {
+            imgSrc = iframeMatch[1];
+          }
+          imgSrc = imgSrc.replace(/&amp;/g, "&").trim();
+
+          const driveMatch = imgSrc.match(/drive\.google\.com\/file\/d\/([^/]+)/);
+          if (driveMatch) imgSrc = `https://drive.google.com/uc?export=download&id=${driveMatch[1]}`;
+          return `
+            <div class="bg-white border border-brandBrown/5 rounded-2xl overflow-hidden shadow-sm mb-4">
+              ${safeTitle ? `<div class="px-4 pt-4 font-bold text-sm text-brandBrown">${safeTitle}</div>` : ""}
+              <div class="p-4">
+                <img
+                  src="${escapeHtml(imgSrc)}"
+                  alt="${safeTitle}"
+                  class="w-full rounded-xl object-contain max-h-[400px] border border-brandBrown/5"
+                  loading="lazy"
+                />
+              </div>
+            </div>`;
+        }
+
+        return ""; // unknown type
+      }).filter(Boolean).join("");
+
+      if (!html) {
+        section.classList.add("hidden");
+        section.innerHTML = "";
+        return;
+      }
+
+      section.innerHTML = `
+        <div class="font-black text-brandGreen text-base flex items-center gap-2 mb-3">
+          <span>🎬</span> TÀI LIỆU BỔ SUNG
+        </div>
+        ${html}
+      `;
+      section.classList.remove("hidden");
+
+      // Áp dụng watermark overlay động cho từng container video Bunny phụ
+      const bunnyContainers = section.querySelectorAll("[data-bunny-media-container]");
+      bunnyContainers.forEach(container => {
+        createWatermark(container, getSavedEmail());
+      });
+
+      // Kích hoạt hiển thị cảnh báo sau 5 giây cho video Bunny nếu load chậm/trắng
+      const warnings = section.querySelectorAll("[data-bunny-warning]");
+      warnings.forEach(w => {
+        setTimeout(() => {
+          if (w) w.classList.remove("hidden");
+        }, 5000);
+      });
+    }
+
+    // Lesson Checklist Renderer
+    function renderLessons(lessons) {
+      const list = document.getElementById("lessonList");
+      if (!list) return;
+      list.innerHTML = "";
+
+      const total = lessons.length;
+      if (total === 0) {
+        list.innerHTML = `<p class="text-center font-bold text-brandBrown/50 py-8">Không tìm thấy bài học nào.</p>`;
+        return;
+      }
+
+      // Check device state
+      const mobileMode = isMobileDevice();
+
+      // On mobile, paginated lists
+      let renderSet = lessons;
+      let pageCount = Math.max(1, Math.ceil(total / MOBILE_PAGE_SIZE));
+      if (mobileMode) {
+        if (currentPage >= pageCount) currentPage = 0;
+        renderSet = lessons.slice(currentPage * MOBILE_PAGE_SIZE, currentPage * MOBILE_PAGE_SIZE + MOBILE_PAGE_SIZE);
+      }
+
+      renderSet.forEach((l, idx) => {
+        const globalIdx = mobileMode ? currentPage * MOBILE_PAGE_SIZE + idx : idx;
+        const item = document.createElement("div");
+        item.className = "bg-white border border-brandBrown/5 rounded-2xl p-4 sm:p-5 shadow-sm hover:shadow-md transition duration-200 grid gap-4 sm:grid-cols-[180px_1fr] md:grid-cols-[240px_1fr_200px] items-center";
+
+        const thumb = l.thumbnailUrl || HERO_PLACEHOLDER_IMAGE;
+
+        item.innerHTML = `
+          <!-- Thumbnail -->
+          <div class="relative aspect-video rounded-xl overflow-hidden shadow-inner border border-brandBrown/5 cursor-pointer bg-brandGray flex-shrink-0" onclick="window.location.href='/lesson.html?id=${l.id}'">
+            <img class="w-full h-full object-cover transition transform hover:scale-105" src="${thumb}" alt="Lesson Thumbnail">
+            <span class="absolute inset-0 m-auto w-12 h-12 rounded-full bg-brandGreen/90 text-white flex items-center justify-center shadow-lg text-lg">▶</span>
+          </div>
+
+          <!-- Description -->
+          <div class="flex flex-col min-w-0">
+            <div class="flex items-center gap-2 mb-2 flex-wrap">
+              <span class="px-2 py-0.5 rounded bg-brandGreen/10 text-brandGreen font-bold text-[10px] sm:text-xs">BÀI ${l.lesson || globalIdx + 1}</span>
+              <span class="text-[11px] sm:text-xs text-brandBrown/50 font-bold">⏱ ${l.duration || "N/A"}</span>
+              <span class="text-[11px] sm:text-xs text-brandBrown/50 font-bold">▥ ${l.level || "Cơ bản"}</span>
+            </div>
+            <h3 class="font-extrabold text-base sm:text-lg text-brandBrown hover:text-brandGreen cursor-pointer truncate mb-1" onclick="window.location.href='/lesson.html?id=${l.id}'">
+              ${l.title || "Bài Học"}
+            </h3>
+            <p class="text-xs sm:text-sm text-brandBrown/70 line-clamp-2 leading-relaxed">
+              ${l.description || "Chưa có mô tả ngắn."}
+            </p>
+          </div>
+
+          <!-- Buttons area (Visible beautifully on Desktop, or as quick access) -->
+          <div class="flex sm:flex-col gap-2.5 sm:pl-4 sm:border-l border-brandBrown/5 justify-end">
+            <button class="flex-1 sm:flex-none px-4 py-2.5 bg-brandGreen hover:bg-brandGreenLight text-white font-bold text-xs sm:text-sm rounded-xl transition duration-150 shadow-sm" onclick="window.location.href='/lesson.html?id=${l.id}'">
+              🎬 XEM BÀI HỌC
+            </button>
+            <button class="flex-1 sm:flex-none px-4 py-2.5 bg-white border border-brandGreen/35 hover:bg-brandCream text-brandGreen font-bold text-xs sm:text-sm rounded-xl transition duration-150" onclick="window.location.href='/lesson.html?id=${l.id}#recipe'">
+              📄 CÔNG THỨC
+            </button>
+          </div>
+        `;
+
+        list.appendChild(item);
+      });
+
+      // Mobile Pagination controls
+      if (mobileMode && total > MOBILE_PAGE_SIZE) {
+        const paginator = document.createElement("div");
+        paginator.className = "flex flex-col items-center gap-3 mt-8 pt-4 border-t border-brandBrown/5";
+
+        const dots = Array.from({ length: pageCount }).map((_, i) => `
+          <button class="w-2.5 h-2.5 rounded-full transition duration-150 ${i === currentPage ? 'bg-brandGreen scale-125' : 'bg-brandBrown/20'}" onclick="goLessonPage(${i})"></button>
+        `).join("");
+
+        paginator.innerHTML = `
+          <div class="flex items-center gap-6">
+            <button class="w-10 h-10 rounded-full bg-white border border-brandBrown/10 flex items-center justify-center font-bold text-brandBrown hover:bg-brandCream shadow-sm" onclick="changeLessonPage(-1)">‹</button>
+            <div class="flex items-center gap-2.5">${dots}</div>
+            <button class="w-10 h-10 rounded-full bg-white border border-brandBrown/10 flex items-center justify-center font-bold text-brandBrown hover:bg-brandCream shadow-sm" onclick="changeLessonPage(1)">›</button>
+          </div>
+          <span class="text-xs text-brandBrown/65 font-bold">Trang ${currentPage + 1} / ${pageCount}</span>
+        `;
+        list.appendChild(paginator);
+      }
+
+      document.getElementById("lessonCount").innerText = `${total} bài học được biên soạn chuẩn khoa học`;
+      document.getElementById("statusBox").classList.add("hidden");
+      list.classList.remove("hidden");
+    }
+
+    function changeLessonPage(delta) {
+      const pageCount = Math.max(1, Math.ceil(currentLessons.length / MOBILE_PAGE_SIZE));
+      currentPage = (currentPage + delta + pageCount) % pageCount;
+      renderLessons(currentLessons);
+    }
+
+    function goLessonPage(page) {
+      currentPage = page;
+      renderLessons(currentLessons);
+    }
+
+    // Handles play video trigger from either main card, desktop, or mobile detailed page
+    async function openLessonVideo(index) {
+      const lesson = currentLessons[index];
+      if (!lesson) return;
+
+      const videoUrl = lessonVideoUrl(lesson);
+      // Allow Google Drive and YouTube to proceed even without secureVideoUrl
+      const hasVideo = Boolean(videoUrl || isGoogleDriveVideoUrl(lesson.videoUrl) || isYouTubeUrl(lesson.videoUrl) || lesson.videoProvider === "bunny_embed" || lesson.videoProvider === "google_drive_preview");
+      if (!hasVideo) {
+        alert("Bài học này chưa được liên kết video.");
+        return;
+      }
+
+      // Check CocCoc browser block first
+      if (isCocCocBrowser()) {
+        openCocCocWarningModal(lesson.title);
+        return;
+      }
+
+      // Check Mobile Only limitation
+      if (!isMobileDevice()) {
+        openPCWarningModal(lesson.title);
+        return;
+      }
+
+      let freshLesson = null;
+      try {
+        freshLesson = await refreshCourseDataBeforePlayIfNeeded(index);
+      } catch (err) {
+        console.error("Refreshing Bunny video token failed:", err);
+        openLessonDetail(index);
+        showMobileVideoExpiredMessage();
+        return;
+      }
+
+      if (!freshLesson || !lessonVideoUrl(freshLesson)) {
+        openLessonDetail(index);
+        showMobileVideoExpiredMessage();
+        return;
+      }
+
+      const freshIndex = findLessonIndex(freshLesson, index);
+
+      // Check again before iframe creation after async refresh returns
+      if (isCocCocBrowser()) {
+        openCocCocWarningModal(freshLesson.title);
+        return;
+      }
+
+      if (!isMobileDevice()) {
+        openPCWarningModal(freshLesson.title);
+        return;
+      }
+
+      // If on mobile, open mobile details view instead of a modal
+      openLessonDetail(freshIndex);
+      await playMobileLessonVideo();
+    }
+
+    // Modal Trigger for PC user - blocks playback, explains policy
+    function openPCWarningModal(title) {
+      document.getElementById("modalTitle").innerText = title || "Video bài học";
+      const container = document.getElementById("desktopVideoContainer");
+      container.innerHTML = getPCBlockedHtml();
+      clearWatermarkFrom(container);
+      
+      document.getElementById("videoModal").classList.remove("hidden");
+      document.getElementById("videoModal").classList.add("flex");
+    }
+
+    // Modal Trigger for Cốc Cốc user - blocks playback, explains policy
+    function openCocCocWarningModal(title) {
+      document.getElementById("modalTitle").innerText = title || "Video bài học";
+      const container = document.getElementById("desktopVideoContainer");
+      container.innerHTML = getCocCocBlockedHtml();
+      clearWatermarkFrom(container);
+
+      document.getElementById("videoModal").classList.remove("hidden");
+      document.getElementById("videoModal").classList.add("flex");
+    }
+
+    function closeVideo() {
+      destroyWatermark();
+      const container = document.getElementById("desktopVideoContainer");
+      if (container) container.innerHTML = "";
+      document.getElementById("videoModal").classList.add("hidden");
+      document.getElementById("videoModal").classList.remove("flex");
+    }
+
+    // Displays recipe immediately in the screen (Desktop modal or scroll-to depending on device)
+    function openLessonRecipe(index) {
+      if (isMobileDevice()) {
+        openLessonDetail(index);
+        // Scroll to recipe
+        setTimeout(() => {
+          document.getElementById("recipeContent").scrollIntoView({ behavior: "smooth" });
+        }, 150);
+      } else {
+        // Desktop simply scrolls or we can show modal for recipes too. For simplicity, openLessonDetail handles mobile-first views.
+        // Let's open details page on Mobile, or on Desktop we scroll down to a details panel if desired. 
+        // As request: "Trang chi tiết bài học trên mobile. Desktop: xem công thức được."
+        // We will show a nice alert/modal for recipes on Desktop to prevent opening a new tab.
+        const lesson = currentLessons[index];
+        if (!lesson) return;
+
+        document.getElementById("modalTitle").innerText = `Công thức: ${lesson.title || "Bài Học"}`;
+        const container = document.getElementById("desktopVideoContainer");
+        container.innerHTML = `
+          <div class="w-full h-full bg-white overflow-y-auto p-6 text-left recipe-render select-text select-none">
+            ${renderRecipeContent(lesson)}
+          </div>
+        `;
+        document.getElementById("videoModal").classList.remove("hidden");
+        document.getElementById("videoModal").classList.add("flex");
+      }
+    }
+
+    // Detailed Mobile Lesson Page Interactions
+    function openLessonDetail(index) {
+      currentView = "lesson";
+      currentLessonIndex = Math.max(0, Math.min(index, currentLessons.length - 1));
+      const l = currentLessons[currentLessonIndex] || {};
+
+      document.getElementById("mobileLessonHeaderTitle").innerText = l.title || "Chi Tiết Bài Học";
+      document.getElementById("mobileLessonSub").innerText = `BÀI ${l.lesson || currentLessonIndex + 1}`;
+      document.getElementById("mobileLessonTitle").innerText = l.title || "Bài Học";
+
+      // Setup recipe
+      const recipe = document.getElementById("recipeContent");
+      recipe.innerHTML = renderRecipeContent(l);
+      recipe.classList.add("max-h-[380px]");
+      document.getElementById("recipeMoreBtn").innerHTML = `Xem thêm <span>▼</span>`;
+
+      // Render media phụ (video Bunny, YouTube, ảnh) từ mediaUrls
+      renderMediaItems(l);
+
+      // Set video box preview state
+      destroyWatermark();
+      const videoBox = document.getElementById("mobileVideoBox");
+      const isDrive = l.videoProvider === "google_drive_preview" || isGoogleDriveVideoUrl(l.videoUrl);
+      if (isDrive) {
+        const previewUrl = normalizeGoogleDrivePreviewUrl(l.videoUrl || l.secureVideoUrl);
+        const fileId = getGoogleDriveFileId(l.videoUrl || l.secureVideoUrl);
+        const returnUrl = window.location.origin + window.location.pathname + '?course=' + encodeURIComponent(COURSE) + '&lesson=' + currentLessonIndex;
+        const playerUrl = `/gdrive-player.html?id=${fileId}&returnUrl=${encodeURIComponent(returnUrl)}`;
+        videoBox.innerHTML = `
+          <div id="mobileVideoWrapper" class="relative w-full h-full flex-grow flex items-center justify-center bg-black">
+            <iframe src="${previewUrl}" class="w-full h-full border-0 absolute inset-0 z-0 opacity-40" style="pointer-events: none;"></iframe>
+            <div class="absolute inset-0 z-10 flex flex-col items-center justify-center text-center p-4 cursor-pointer" onclick="sessionStorage.setItem('courseReturnUrl', '${returnUrl}'); window.location.href='${playerUrl}'">
+              <div class="bg-brandGreen hover:bg-brandGreen/95 text-white font-extrabold text-base sm:text-lg px-6 py-3.5 rounded-full shadow-lg transition transform active:scale-95 mb-2.5">
+                ▶ Ấn vào đây để xem video
+              </div>
+              <div class="text-xs sm:text-sm text-white/90 font-bold tracking-wide">
+                Video sẽ mở bằng Google Drive
+              </div>
+            </div>
+          </div>
+        `;
+      } else {
+        videoBox.innerHTML = `
+          <div id="mobileVideoWrapper" class="relative w-full h-full flex-grow flex items-center justify-center bg-black">
+            <img id="mobileVideoThumb" class="absolute inset-0 w-full h-full object-cover opacity-75" src="${l.thumbnailUrl || HERO_PLACEHOLDER_IMAGE}" alt="Thumbnail">
+            <button class="relative z-10 w-16 h-16 rounded-full bg-brandGreen/90 hover:bg-brandGreen text-white text-2xl flex items-center justify-center shadow-lg transition transform active:scale-95" onclick="playMobileLessonVideo()">
+              ▶
+            </button>
+          </div>
+        `;
+      }
+
+      // Show mobile view
+      document.getElementById("homeView").classList.add("hidden");
+      document.getElementById("mobileLessonPage").classList.remove("hidden");
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+
+    function goHomeView() {
+      currentView = "home";
+      destroyWatermark();
+      document.getElementById("mobileLessonPage").classList.add("hidden");
+      document.getElementById("homeView").classList.remove("hidden");
+      if (currentLessons.length > 0) {
+        renderLessons(currentLessons);
+      }
+    }
+
+    async function playMobileLessonVideo() {
+      const lessonIndex = currentLessonIndex;
+      const lesson = currentLessons[lessonIndex];
+      if (!lesson) return;
+
+      const initialVideoUrl = lessonVideoUrl(lesson);
+      // Allow Google Drive and YouTube to proceed
+      const hasVideo = Boolean(initialVideoUrl || isGoogleDriveVideoUrl(lesson.videoUrl) || isYouTubeUrl(lesson.videoUrl) || lesson.videoProvider === "bunny_embed" || lesson.videoProvider === "google_drive_preview");
+      if (!hasVideo) {
+        alert("Video chưa được cập nhật cho bài học này.");
+        return;
+      }
+
+      const wrapper = document.getElementById("mobileVideoWrapper");
+      if (!wrapper) return;
+
+      // 1. Check Cốc Cốc Browser Block
+      if (isCocCocBrowser()) {
+        wrapper.innerHTML = getCocCocBlockedHtml();
+        clearWatermarkFrom(wrapper);
+        return;
+      }
+
+      // 2. Check PC/Laptop Block
+      if (!isMobileDevice()) {
+        wrapper.innerHTML = getPCBlockedHtml();
+        clearWatermarkFrom(wrapper);
+        return;
+      }
+
+      let freshLesson = null;
+      try {
+        freshLesson = await refreshCourseDataBeforePlayIfNeeded(lessonIndex);
+      } catch (err) {
+        console.error("Refreshing Bunny video token failed:", err);
+        wrapper.innerHTML = getVideoExpiredHtml();
+        return;
+      }
+
+      if (!freshLesson) {
+        wrapper.innerHTML = getVideoExpiredHtml();
+        return;
+      }
+
+      const freshIndex = findLessonIndex(freshLesson, lessonIndex);
+      currentLessonIndex = Math.max(0, Math.min(freshIndex, currentLessons.length - 1));
+
+      const videoUrl = lessonVideoUrl(freshLesson);
+      if (!videoUrl) {
+        wrapper.innerHTML = getVideoExpiredHtml();
+        return;
+      }
+
+      // Check again before iframe creation after async refresh returns
+      if (isCocCocBrowser()) {
+        wrapper.innerHTML = getCocCocBlockedHtml();
+        clearWatermarkFrom(wrapper);
+        return;
+      }
+
+      if (!isMobileDevice()) {
+        wrapper.innerHTML = getPCBlockedHtml();
+        clearWatermarkFrom(wrapper);
+        return;
+      }
+
+      // 3. Render clean Bunny Stream Iframe
+      wrapper.innerHTML = getIframePlayerHtml(videoUrl);
+      if (shouldShowWatermarkForLesson(freshLesson)) {
+        createWatermark(wrapper, getSavedEmail());
+      } else {
+        clearWatermarkFrom(wrapper);
+      }
+    }
+
+    function toggleRecipeMore() {
+      const recipe = document.getElementById("recipeContent");
+      const btn = document.getElementById("recipeMoreBtn");
+      
+      if (recipe.classList.contains("max-h-[380px]")) {
+        recipe.classList.remove("max-h-[380px]");
+        recipe.classList.add("max-h-[5000px]"); // Expand
+        btn.innerHTML = `Thu gọn <span>▲</span>`;
+      } else {
+        recipe.classList.remove("max-h-[5000px]");
+        recipe.classList.add("max-h-[380px]"); // Collapse
+        btn.innerHTML = `Xem thêm <span>▼</span>`;
+      }
+    }
+
+    function openPrevLesson() {
+      if (currentLessonIndex > 0) {
+        openLessonDetail(currentLessonIndex - 1);
+      } else {
+        alert("Đây là bài học đầu tiên.");
+      }
+    }
+
+    function openNextLesson() {
+      if (currentLessonIndex < currentLessons.length - 1) {
+        openLessonDetail(currentLessonIndex + 1);
+      } else {
+        alert("Đây là bài học cuối cùng.");
+      }
+    }
+
+    // Google API communication & loading logic
+    async function loadCourseData(authPayload) {
+      const statusBox = document.getElementById("statusBox");
+      if (!statusBox) return;
+
+      statusBox.classList.remove("hidden");
+      statusBox.innerHTML = `
+        <div class="flex items-center justify-center gap-3 py-6">
+          <div class="w-6 h-6 border-4 border-brandGreen border-t-transparent rounded-full animate-spin"></div>
+          <span class="font-extrabold text-brandBrown text-base">Đang kiểm tra quyền học...</span>
+        </div>
+      `;
+
+      try {
+        const payload = { course: COURSE, ...authPayload };
+        const response = await fetch("/api/lms/course-data", {
+          method: "POST",
+          credentials: "same-origin",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+
+        const data = await response.json();
+        
+        if (!response.ok || !data.allowed) {
+          if (response.status === 401 || response.status === 403) {
+            clearSession();
+            statusBox.innerHTML = `
+              <div class="text-4xl mb-4">⚠️</div>
+              <p class="font-extrabold text-lg sm:text-xl text-brandOrange mb-2">Không có quyền truy cập</p>
+              <p class="text-brandBrown/60 text-sm max-w-sm mx-auto leading-relaxed">
+                Tài khoản Gmail <b>${escapeHtml(data.email || "của bạn")}</b> chưa được đăng ký khóa học này. Vui lòng đăng nhập đúng tài khoản hoặc liên hệ admin.
+              </p>
+            `;
+            showLoggedOutState();
+            return;
+          }
+          statusBox.innerHTML = `
+            <div class="text-4xl mb-4">📡</div>
+            <p class="font-extrabold text-lg sm:text-xl text-brandBrown mb-2">Lỗi kết nối</p>
+            <p class="text-brandBrown/60 text-sm">Máy chủ đang gặp sự cố. Vui lòng tải lại trang sau ít phút.</p>
+          `;
+          return;
+        }
+
+        // Save session & setup views
+        saveSession(data);
+        showLoggedInState(data.email);
+
+        // Populate course switcher if student has multiple active courses
+        if (data.allowedCourses && data.allowedCourses.length > 1) {
+          const switcher = document.getElementById("lmsCourseSwitcher");
+          if (switcher) {
+            switcher.innerHTML = data.allowedCourses.map(c => `
+              <option value="${c}" ${c === COURSE ? 'selected' : ''}>Lớp: ${c.toUpperCase()}</option>
+            `).join('');
+            switcher.classList.remove("hidden");
+          }
+        }
+
+        // Update Course Config
+        if (data.courseInfo) {
+          if (data.courseInfo.title) {
+            document.getElementById("courseTitle").innerHTML = data.courseInfo.title;
+          }
+          if (data.courseInfo.subtitle) {
+            document.getElementById("courseSubtitle").innerText = data.courseInfo.subtitle;
+          }
+          setHeroImageSource(data.courseInfo.heroImage || HERO_PLACEHOLDER_IMAGE);
+        } else {
+          setHeroImageSource(HERO_PLACEHOLDER_IMAGE);
+        }
+
+        currentLessons = data.lessons || [];
+        renderLessons(currentLessons);
+
+        // Auto-open specific lesson details if specified in URL query
+        const startLesson = new URLSearchParams(window.location.search).get("lesson");
+        if (startLesson !== null) {
+          const lIdx = parseInt(startLesson, 10);
+          if (!isNaN(lIdx) && lIdx >= 0 && lIdx < currentLessons.length) {
+            setTimeout(() => {
+              openLessonDetail(lIdx);
+            }, 100);
+          }
+        }
+
+      } catch (err) {
+        console.error("Course loading failed:", err);
+        statusBox.innerHTML = `
+          <div class="text-4xl mb-4">🚨</div>
+          <p class="font-extrabold text-lg sm:text-xl text-brandOrange mb-2">Lỗi hệ thống</p>
+          <p class="text-brandBrown/60 text-sm max-w-sm mx-auto leading-relaxed">
+            Không tải được danh sách bài học. Kiểm tra lại Google Sheet hoặc cấu hình môi trường Vercel.
+          </p>
+        `;
+      }
+    }
+
+    async function waitForGoogleLibrary() {
+      if (typeof google !== "undefined" && google.accounts && google.accounts.id) return;
+      await new Promise((resolve, reject) => {
+        let count = 0;
+        const interval = setInterval(() => {
+          count++;
+          if (typeof google !== "undefined" && google.accounts && google.accounts.id) {
+            clearInterval(interval);
+            resolve();
+          }
+          if (count > 80) {
+            clearInterval(interval);
+            reject(new Error("Không thể tải Google Sign-In Client SDK"));
+          }
+        }, 100);
+      });
+    }
+
+    async function getPublicConfig() {
+      try {
+        const res = await fetch("/api/lms/public-config");
+        if (!res.ok) return { googleClientId: "" };
+        return await res.json();
+      } catch (err) {
+        console.error("Config fetch failed:", err);
+        return { googleClientId: "" };
+      }
+    }
+
+    async function setupGoogleSignIn(config) {
+      if (!config.googleClientId) return false;
+      try {
+        await waitForGoogleLibrary();
+        google.accounts.id.initialize({
+          client_id: config.googleClientId,
+          callback: (response) => loadCourseData({ credential: response.credential })
+        });
+        return true;
+      } catch (err) {
+        console.error("Init Google accounts failed:", err);
+        return false;
+      }
+    }
+
+    async function tryRestoreSession() {
+      const savedToken = getSavedSession();
+      if (savedToken) {
+        await loadCourseData({ sessionToken: savedToken });
+        return true;
+      }
+      return false;
+    }
+
+    async function initGoogle() {
+      const configPromise = getPublicConfig();
+      if (await tryRestoreSession()) return;
+      
+      const config = await configPromise;
+      const googleReady = await setupGoogleSignIn(config);
+      
+      showLoggedOutState();
+      if (!googleReady) {
+        document.getElementById("statusBox").innerHTML = `
+          <div class="text-4xl mb-4">⚙️</div>
+          <p class="font-extrabold text-lg sm:text-xl text-brandOrange mb-2">Chưa cấu hình GOOGLE_CLIENT_ID</p>
+          <p class="text-brandBrown/60 text-sm">Vui lòng thiết lập biến môi trường và tải lại trang.</p>
+        `;
+      }
+    }
+
+    function logoutGoogle() {
+      clearSession();
+      location.reload();
+    }
+
+    // Initial load
+    window.onload = () => {
+      // Setup right click block on video elements
+      document.addEventListener("contextmenu", (event) => {
+        if (event.target.closest("#mobileVideoBox, #desktopVideoContainer")) {
+          event.preventDefault();
+        }
+      });
+
+      // Initialize
+      initGoogle();
+    };
+
+    // Auto resize listener to handle design shift
+    window.addEventListener("resize", () => {
+      if (currentLessons.length > 0 && currentView === "home") {
+        renderLessons(currentLessons);
+      }
+    });
+  </script>
+</body>
+</html>

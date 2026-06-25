@@ -75,3 +75,96 @@ VALUES (
   }'::jsonb
 )
 ON CONFLICT (slug) DO NOTHING;
+
+-- ==============================================================================
+-- HỆ THỐNG LMS / HỌC VIÊN & BÀI HỌC (BỔ SUNG)
+-- ==============================================================================
+
+-- 5. Bảng lessons (Thay thế tab Lessons)
+CREATE TABLE IF NOT EXISTS lessons (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  course_id UUID REFERENCES courses(id) ON DELETE CASCADE,
+  course_slug TEXT NOT NULL,
+  lesson_no INTEGER NOT NULL,
+  title TEXT NOT NULL,
+  description TEXT,
+  video_provider TEXT DEFAULT 'bunny',
+  video_url TEXT,
+  bunny_library_id TEXT,
+  bunny_video_id TEXT,
+  recipe_url TEXT,
+  document_url TEXT,
+  photo_url TEXT,
+  thumbnail_url TEXT,
+  duration_text TEXT,
+  level TEXT,
+  media_urls TEXT,
+  views INTEGER DEFAULT 0,
+  is_free BOOLEAN DEFAULT false,
+  active BOOLEAN DEFAULT true,
+  status TEXT DEFAULT 'active',
+  sort_order INTEGER DEFAULT 0,
+  raw_data JSONB DEFAULT '{}'::jsonb,
+  created_at TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now(),
+  UNIQUE (course_slug, lesson_no)
+);
+
+-- 6. Bảng students (Thay thế tab Students)
+CREATE TABLE IF NOT EXISTS students (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  email TEXT UNIQUE NOT NULL,
+  full_name TEXT,
+  phone TEXT,
+  status TEXT DEFAULT 'active',
+  note TEXT,
+  raw_data JSONB DEFAULT '{}'::jsonb,
+  created_at TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now()
+);
+
+-- 7. Bảng student_enrollments (Quản lý phân quyền học viên vào khóa học)
+CREATE TABLE IF NOT EXISTS student_enrollments (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  student_id UUID REFERENCES students(id) ON DELETE CASCADE,
+  course_id UUID REFERENCES courses(id) ON DELETE CASCADE,
+  course_slug TEXT NOT NULL,
+  email TEXT NOT NULL,
+  status TEXT DEFAULT 'active',
+  source_order_id UUID REFERENCES orders(id) ON DELETE SET NULL,
+  expired_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now(),
+  UNIQUE (email, course_slug)
+);
+
+-- 8. Bảng site_config (Thay thế tab Config)
+CREATE TABLE IF NOT EXISTS site_config (
+  key TEXT PRIMARY KEY,
+  value JSONB,
+  updated_at TIMESTAMPTZ DEFAULT now()
+);
+
+-- 9. Bảng lesson_progress (Theo dõi tiến độ học)
+CREATE TABLE IF NOT EXISTS lesson_progress (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  email TEXT NOT NULL,
+  course_slug TEXT NOT NULL,
+  lesson_id UUID REFERENCES lessons(id) ON DELETE CASCADE,
+  progress_percent INTEGER DEFAULT 0,
+  completed BOOLEAN DEFAULT false,
+  last_watched_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now(),
+  UNIQUE (email, lesson_id)
+);
+
+-- 10. Tạo indexes cho các bảng LMS mới
+CREATE INDEX IF NOT EXISTS idx_lessons_course_slug ON lessons(course_slug);
+CREATE INDEX IF NOT EXISTS idx_lessons_sort ON lessons(course_slug, sort_order, lesson_no);
+CREATE INDEX IF NOT EXISTS idx_students_email ON students(email);
+CREATE INDEX IF NOT EXISTS idx_student_enrollments_email ON student_enrollments(email);
+CREATE INDEX IF NOT EXISTS idx_student_enrollments_course_slug ON student_enrollments(course_slug);
+CREATE INDEX IF NOT EXISTS idx_lesson_progress_email ON lesson_progress(email);
+CREATE INDEX IF NOT EXISTS idx_lesson_progress_lookup ON lesson_progress(email, lesson_id);
+

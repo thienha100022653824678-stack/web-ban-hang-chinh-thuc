@@ -1,4 +1,5 @@
 import { supabase } from "../utils/supabase.js";
+import { autoEnroll } from "../utils/lms.js";
 
 export default async function handler(req, res) {
   if (req.method !== "POST") {
@@ -21,7 +22,7 @@ export default async function handler(req, res) {
     }
 
     // Cập nhật tất cả các đơn hàng của khóa học từ "Chờ duyệt" thành "Đã duyệt"
-    // và lấy về danh sách email của học viên vừa được duyệt
+    // và lấy về danh sách thông tin học viên để tự động cấp quyền
     const { data: updatedOrders, error } = await supabase
       .from("orders")
       .update({
@@ -30,11 +31,25 @@ export default async function handler(req, res) {
       })
       .eq("course_slug", course)
       .eq("status", "Chờ duyệt")
-      .select("customer_email");
+      .select("id, customer_email, customer_name, customer_phone, course_slug");
 
     if (error) throw error;
 
-    const gmails = (updatedOrders || []).map((o) => o.customer_email).filter(Boolean);
+    const gmails = [];
+    if (updatedOrders && updatedOrders.length > 0) {
+      for (const order of updatedOrders) {
+        if (order.customer_email) {
+          gmails.push(order.customer_email);
+          await autoEnroll(supabase, {
+            email: order.customer_email,
+            courseSlug: order.course_slug,
+            name: order.customer_name,
+            phone: order.customer_phone,
+            orderId: order.id
+          });
+        }
+      }
+    }
 
     return res.status(200).json({
       success: true,

@@ -1,4 +1,5 @@
 import { supabase } from "../utils/supabase.js";
+import { autoEnroll } from "../utils/lms.js";
 
 export default async function handler(req, res) {
   // CORS headers
@@ -83,6 +84,17 @@ export default async function handler(req, res) {
         .single();
 
       if (error) throw error;
+
+      // Tự động cấp quyền học nếu đơn được chuyển trạng thái thành "Đã duyệt"
+      if (status === "Đã duyệt" && data) {
+        await autoEnroll(supabase, {
+          email: data.customer_email,
+          courseSlug: data.course_slug,
+          name: data.customer_name,
+          phone: data.customer_phone,
+          orderId: data.id
+        });
+      }
 
       return res.status(200).json({ success: true, data });
     }
