@@ -89,6 +89,21 @@ test("configRowToValue: accepts bare string and {val}/{value} envelope shapes", 
   assert.equal(configRowToValue({ value: 123 }), null);
 });
 
+// jsonb boolean regression: Supabase returns a JS `true`/`false` (not a
+// string) when the column holds a jsonb boolean — e.g. v2_kill_switch
+// written via setKillSwitch(true). Before the fix, `typeof v === "boolean"`
+// fell through to the object branch → returned null → parseBooleanFlag(null)
+// → false → the kill switch silently no-oped. Must round-trip to the bare
+// boolean so parseBooleanFlag(true) → true.
+test("configRowToValue: jsonb boolean round-trips (v2_kill_switch written as true/false)", () => {
+  const { configRowToValue } = controller._internals;
+  assert.equal(configRowToValue({ value: true }), true);
+  assert.equal(configRowToValue({ value: false }), false);
+  assert.equal(configRowToValue({ value: { val: true } }), true);
+  assert.equal(configRowToValue({ value: { value: false } }), false);
+  assert.equal(configRowToValue({ value: { val: true, value: "v2" } }), true);
+});
+
 // ── gate semantics ─────────────────────────────────────────────────────────
 
 test("gate: cold cache → fail-open (true), env flags control behavior", () => {
