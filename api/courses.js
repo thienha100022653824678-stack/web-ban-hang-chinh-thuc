@@ -187,6 +187,12 @@ export default async function handler(req, res) {
         learningSite = validated.learningSite;
       }
       if (isPreviewFixture()) {
+        if (fixtureCourses().some((course) => course.slug === slug)) {
+          return res.status(409).json({
+            error: "Slug khóa học đã tồn tại. Hãy dùng suffix -yeubep hoặc -yeunauan.",
+            code: "COURSE_SLUG_CONFLICT"
+          });
+        }
         const row = fixtureSaveCourse({ ...req.body, sales_site: salesSite, learning_course_slug: storedLearning, learning_site: learningSite, learning_lesson_count: learning.lessonCount });
         return res.status(201).json({ success: true, data: row, fixture: true });
       }

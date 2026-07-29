@@ -52,6 +52,7 @@ test("admin filters targets and emits LMS deep link", () => {
 test("backend persists learning_site and returns explicit cross-site error code", () => {
   const api = fs.readFileSync(new URL("../api/courses.js", import.meta.url), "utf8");
   assert.match(api, /learning_site/);
+  assert.match(api, /fixtureCourses\(\)\.some\(\(course\) => course\.slug === slug\)/);
   assert.match(api, /CROSS_SITE_LMS_TARGET_FORBIDDEN|validateSameSiteLearningTarget/);
   assert.match(api, /LEGACY_SHARED_MAPPING_READ_ONLY/);
   assert.match(api, /COURSE_SLUG_CONFLICT/);
