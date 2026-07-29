@@ -314,6 +314,13 @@
   >
     Thông báo ở đây
   </div>
+  <a
+    id="openLmsAdminLink"
+    href="#"
+    target="_blank"
+    rel="noopener"
+    class="hidden fixed bottom-20 left-1/2 -translate-x-1/2 z-50 rounded-xl bg-emerald-700 px-5 py-3 text-sm font-black text-white shadow-2xl hover:bg-emerald-800"
+  >Mở trong LMS Admin</a>
 
   <!-- JS CONTROLLER -->
   <script>
@@ -891,15 +898,6 @@
       if (imageStatus) imageStatus.innerText = "";
       if (qrStatus) qrStatus.innerText = "";
       const learningSelect = document.getElementById("learningCourseSlugInput");
-      learningSelect.innerHTML = '<option value="">Dùng chính khóa học này</option>';
-      (allCourses || [])
-        .filter((item) => (!item.learning_course_slug || item.learning_course_slug === item.slug) && Number(item.learning_lesson_count || 0) > 0)
-        .forEach((item) => {
-          const option = document.createElement("option");
-          option.value = item.slug;
-          option.textContent = `${item.slug} — ${item.learning_lesson_count} bài học`;
-          learningSelect.appendChild(option);
-        });
       
       if (course) {
         // Edit Mode
@@ -954,7 +952,43 @@
           }
         }
       }
+      populateLearningTargetOptions(learningSelect.value);
     }
+
+    function populateLearningTargetOptions(selectedValue = "") {
+      const learningSelect = document.getElementById("learningCourseSlugInput");
+      const salesSite = document.querySelector('input[name="salesSite"]:checked')?.value || "yeunauan";
+      learningSelect.innerHTML = '<option value="">Dùng chính khóa học này</option>';
+      (allCourses || [])
+        .filter((item) =>
+          (!item.learning_course_slug || item.learning_course_slug === item.slug) &&
+          Number(item.learning_lesson_count || 0) > 0 &&
+          (!item.learning_site || item.learning_site === salesSite)
+        )
+        .forEach((item) => {
+          const option = document.createElement("option");
+          option.value = item.slug;
+          option.textContent = `${item.slug} — ${item.learning_lesson_count} bài học`;
+          learningSelect.appendChild(option);
+        });
+      if ([...learningSelect.options].some((option) => option.value === selectedValue)) {
+        learningSelect.value = selectedValue;
+      } else if (selectedValue) {
+        const legacy = (allCourses || []).find((item) => item.slug === selectedValue);
+        if (legacy) {
+          const option = document.createElement("option");
+          option.value = selectedValue;
+          option.textContent = `${selectedValue} — LIÊN KẾT DÙNG CHUNG CŨ`;
+          option.dataset.legacyShared = "true";
+          learningSelect.appendChild(option);
+          learningSelect.value = selectedValue;
+        }
+      }
+    }
+
+    document.querySelectorAll('input[name="salesSite"]').forEach((radio) => {
+      radio.addEventListener("change", () => populateLearningTargetOptions(""));
+    });
 
     function closeCourseModal() {
       document.getElementById("courseModal").classList.add("hidden");
@@ -1027,8 +1061,21 @@
 
         const data = await response.json();
 
-        if (response.ok && data?.data?.sales_site === sales_site && (data?.data?.learning_course_slug || "") === learning_course_slug && data?.data?.id) {
+        const expectedLearningSite = learning_course_slug
+          ? (allCourses || []).find((item) => item.slug === learning_course_slug)?.learning_site
+          : sales_site;
+        if (response.ok &&
+          data?.data?.sales_site === sales_site &&
+          (data?.data?.learning_course_slug || "") === learning_course_slug &&
+          (!data?.data?.learning_site || data.data.learning_site === expectedLearningSite) &&
+          data?.data?.id) {
           showToast(id ? "Đã cập nhật khóa học" : "Đã tạo khóa học mới thành công");
+          if (!id) {
+            const adminUrl = `https://www.daubepnho.store/lms-admin.html?site=${encodeURIComponent(data.data.learning_site || sales_site)}&course=${encodeURIComponent(data.data.slug)}`;
+            const openLmsLink = document.getElementById("openLmsAdminLink");
+            openLmsLink.href = adminUrl;
+            openLmsLink.classList.remove("hidden");
+          }
           closeCourseModal();
           loadCourses();
         } else {

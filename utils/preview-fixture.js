@@ -47,6 +47,7 @@ const state = globalThis.__YEUBEP_PREVIEW_FIXTURE__ || {
       active: true,
       sort_order: 1,
       sales_site: "yeubep",
+      learning_lesson_count: 3,
       raw_data: { bankName: "PREVIEW ONLY", bankAccount: "0000000000", bankOwner: "TEST", transferNote: "PREVIEW", qrImageUrl: "" }
     },
     {
@@ -58,6 +59,7 @@ const state = globalThis.__YEUBEP_PREVIEW_FIXTURE__ || {
       active: true,
       sort_order: 1,
       sales_site: null,
+      learning_lesson_count: 2,
       raw_data: {}
     }
   ],

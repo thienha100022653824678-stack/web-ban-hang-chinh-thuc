@@ -12,6 +12,12 @@ import {
   resolveLearningCourse,
   resolveLearningCourseFromSupabase
 } from "../utils/learning-course.js";
+import {
+  CommerceLearningSiteError,
+  isCommerceLmsSiteIsolationEnabled,
+  resolveCourseLearningSite,
+  validateSameSiteLearningTarget
+} from "../utils/learning-site.js";
 
 function storedLearningSlug(salesSlug, value) {
   const target = normalizeLearningSlug(value);
@@ -63,14 +69,28 @@ export default async function handler(req, res) {
   }
 
   try {
+    const isolationEnabled = isCommerceLmsSiteIsolationEnabled();
     if (req.method === "GET") {
       if (isPreviewFixture()) {
-        return res.status(200).json(fixtureCourses().map((course) => ({
-          ...(course.raw_data || {}),
-          ...course,
-          sales_site: effectiveSalesSite(course),
-          sales_url: buildCourseSalesUrl(course)
-        })));
+        const rows = fixtureCourses();
+        const bySlug = new Map(rows.map((course) => [course.slug, course]));
+        const result = [];
+        for (const course of rows) {
+          const learningSite = isolationEnabled
+            ? await resolveCourseLearningSite(course, { findCourseBySlug: async (slug) => bySlug.get(slug) || null })
+            : undefined;
+          result.push({
+            ...(course.raw_data || {}),
+            ...course,
+            sales_site: effectiveSalesSite(course),
+            sales_url: buildCourseSalesUrl(course),
+            learning_site: learningSite,
+            legacy_shared_mapping: isolationEnabled &&
+              getEffectiveLearningSlug(course) !== course.slug &&
+              learningSite !== effectiveSalesSite(course)
+          });
+        }
+        return res.status(200).json(result);
       }
       // Lấy danh sách tất cả khóa học, sắp xếp theo sort_order trước, sau đó là created_at
       const { data: courses, error } = await supabase
@@ -87,6 +107,15 @@ export default async function handler(req, res) {
         const { count } = await supabase.from("lessons").select("id", { count: "exact", head: true }).eq("course_slug", slug).neq("status", "hidden");
         lessonCounts.set(slug, count || 0);
       }));
+      const bySlug = new Map(courses.map((course) => [course.slug, course]));
+      const learningSites = new Map();
+      if (isolationEnabled) {
+        for (const course of courses) {
+          learningSites.set(course.slug, await resolveCourseLearningSite(course, {
+            findCourseBySlug: async (slug) => bySlug.get(slug) || null
+          }));
+        }
+      }
       const formattedCourses = courses.map((c) => ({
         ...(c.raw_data || {}),
         id: c.id,
@@ -109,6 +138,10 @@ export default async function handler(req, res) {
         learning_course_slug: c.learning_course_slug || "",
         effective_learning_course_slug: getEffectiveLearningSlug(c),
         learning_lesson_count: lessonCounts.get(getEffectiveLearningSlug(c)) || 0,
+        learning_site: isolationEnabled ? learningSites.get(c.slug) : undefined,
+        legacy_shared_mapping: isolationEnabled &&
+          getEffectiveLearningSlug(c) !== c.slug &&
+          learningSites.get(c.slug) !== effectiveSalesSite(c),
         expected_start_date: c.expected_start_date || ""
       }));
 
@@ -143,8 +176,18 @@ export default async function handler(req, res) {
       const salesSite = requireSalesSite(sales_site);
       const storedLearning = storedLearningSlug(slug, learning_course_slug);
       const learning = await validateLearningTarget({ slug, active: active !== false, learning_course_slug: storedLearning });
+      let learningSite = null;
+      if (isolationEnabled) {
+        const candidate = { slug, sales_site: salesSite, learning_course_slug: storedLearning, learning_site: salesSite };
+        const rows = isPreviewFixture() ? fixtureCourses() : (await supabase.from("courses").select("*")).data || [];
+        const bySlug = new Map(rows.map((course) => [course.slug, course]));
+        const validated = await validateSameSiteLearningTarget(candidate, {
+          findCourseBySlug: async (target) => bySlug.get(target) || null
+        });
+        learningSite = validated.learningSite;
+      }
       if (isPreviewFixture()) {
-        const row = fixtureSaveCourse({ ...req.body, sales_site: salesSite, learning_course_slug: storedLearning, learning_lesson_count: learning.lessonCount });
+        const row = fixtureSaveCourse({ ...req.body, sales_site: salesSite, learning_course_slug: storedLearning, learning_site: learningSite, learning_lesson_count: learning.lessonCount });
         return res.status(201).json({ success: true, data: row, fixture: true });
       }
 
@@ -167,6 +210,7 @@ export default async function handler(req, res) {
           is_published: is_published === true,
           sales_site: salesSite,
           learning_course_slug: storedLearning,
+          ...(isolationEnabled ? { learning_site: learningSite } : {}),
           raw_data: {
             bankName: bankName || "",
             bankAccount: bankAccount || "",
@@ -247,13 +291,41 @@ export default async function handler(req, res) {
         const storedLearning = storedLearningSlug(nextSlug,
           Object.prototype.hasOwnProperty.call(req.body, "learning_course_slug") ? learning_course_slug : current.learning_course_slug);
         const learning = await validateLearningTarget({ ...current, slug: nextSlug, learning_course_slug: storedLearning });
-        const row = fixtureSaveCourse({ ...req.body, sales_site: salesSite, learning_course_slug: storedLearning, learning_lesson_count: learning.lessonCount });
+        let learningSite = current.learning_site || null;
+        if (isolationEnabled) {
+          const rows = fixtureCourses();
+          const bySlug = new Map(rows.map((course) => [course.slug, course]));
+          const candidate = {
+            ...current,
+            slug: nextSlug,
+            sales_site: salesSite,
+            learning_course_slug: storedLearning,
+            learning_site: storedLearning ? null : salesSite
+          };
+          const validated = await validateSameSiteLearningTarget(candidate, {
+            findCourseBySlug: async (target) => bySlug.get(target) || null,
+            allowExistingLegacy: true,
+            originalCourse: current
+          });
+          if (validated.legacyShared &&
+            (storedLearning !== current.learning_course_slug || salesSite !== effectiveSalesSite(current))) {
+            throw new CommerceLearningSiteError(
+              "LEGACY_SHARED_MAPPING_READ_ONLY",
+              "Liên kết dùng chung cũ không được thay đổi",
+              409
+            );
+          }
+          learningSite = validated.legacyShared ? (current.learning_site || null) : validated.learningSite;
+        }
+        const row = fixtureSaveCourse({ ...req.body, sales_site: salesSite, learning_course_slug: storedLearning, learning_site: learningSite, learning_lesson_count: learning.lessonCount });
         return res.status(200).json({ success: true, data: row, fixture: true });
       }
 
       const { data: existingCourse, error: existingErr } = await supabase
         .from("courses")
-        .select("id,slug,active,image_url,expected_start_date,raw_data,sales_site,learning_course_slug")
+        .select(isolationEnabled
+          ? "id,slug,active,image_url,expected_start_date,raw_data,sales_site,learning_course_slug,learning_site"
+          : "id,slug,active,image_url,expected_start_date,raw_data,sales_site,learning_course_slug")
         .eq("id", id)
         .maybeSingle();
 
@@ -272,6 +344,33 @@ export default async function handler(req, res) {
       const storedLearning = storedLearningSlug(nextSlug,
         Object.prototype.hasOwnProperty.call(req.body, "learning_course_slug") ? learning_course_slug : existingCourse.learning_course_slug);
       await validateLearningTarget({ ...existingCourse, slug: nextSlug, learning_course_slug: storedLearning });
+      let learningSite = existingCourse.learning_site || null;
+      if (isolationEnabled) {
+        const { data: allCourses, error: allCoursesError } = await supabase.from("courses").select("*");
+        if (allCoursesError) throw allCoursesError;
+        const bySlug = new Map((allCourses || []).map((course) => [course.slug, course]));
+        const candidate = {
+          ...existingCourse,
+          slug: nextSlug,
+          sales_site: salesSite,
+          learning_course_slug: storedLearning,
+          learning_site: storedLearning ? null : salesSite
+        };
+        const validated = await validateSameSiteLearningTarget(candidate, {
+          findCourseBySlug: async (target) => bySlug.get(target) || null,
+          allowExistingLegacy: true,
+          originalCourse: existingCourse
+        });
+        if (validated.legacyShared &&
+          (storedLearning !== existingCourse.learning_course_slug || salesSite !== effectiveSalesSite(existingCourse))) {
+          throw new CommerceLearningSiteError(
+            "LEGACY_SHARED_MAPPING_READ_ONLY",
+            "Liên kết dùng chung cũ không được thay đổi",
+            409
+          );
+        }
+        learningSite = validated.legacyShared ? (existingCourse.learning_site || null) : validated.learningSite;
+      }
       const nextImageUrl = String(imageUrl || "").trim();
       const hasExpectedStartDate = Object.prototype.hasOwnProperty.call(req.body, "expected_start_date");
 
@@ -290,6 +389,7 @@ export default async function handler(req, res) {
         teacher_name: teacher_name || "",
         sales_site: salesSite,
         learning_course_slug: storedLearning,
+        ...(isolationEnabled ? { learning_site: learningSite } : {}),
         raw_data: {
           ...existingRawData,
           bankName: bankName || "",
@@ -368,6 +468,13 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: "Method not allowed" });
   } catch (error) {
     console.error("COURSES_API_ERROR:", error);
-    return res.status(500).json({ error: error.message });
+    if (error?.code === "23505" && String(error?.message || "").includes("slug")) {
+      return res.status(409).json({
+        error: "Slug khóa học đã tồn tại. Hãy dùng suffix -yeubep hoặc -yeunauan.",
+        code: "COURSE_SLUG_CONFLICT"
+      });
+    }
+    const status = error instanceof CommerceLearningSiteError ? error.status : 500;
+    return res.status(status).json({ error: error.message, code: error.code });
   }
 }
