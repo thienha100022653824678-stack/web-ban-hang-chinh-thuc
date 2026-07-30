@@ -326,6 +326,8 @@
   <script>
     let allCourses = [];
     let currentAdminPassword = "";
+    let currentDeploymentSalesSite = "yeunauan";
+    let dualLmsRoutingEnabled = false;
 
     // 1. SHOW TOAST NOTIFICATION
     function showToast(text) {
@@ -427,6 +429,15 @@
         }
 
         allCourses = await res.json();
+        const deploymentSalesSite = res.headers.get("X-Sales-Site");
+        dualLmsRoutingEnabled = res.headers.get("X-Commerce-Dual-Lms-Routing") === "enabled";
+        if (dualLmsRoutingEnabled && ["yeunauan", "yeubep"].includes(deploymentSalesSite)) {
+          currentDeploymentSalesSite = deploymentSalesSite;
+          document.querySelectorAll('input[name="salesSite"]').forEach((radio) => {
+            radio.checked = radio.value === deploymentSalesSite;
+            radio.disabled = radio.value !== deploymentSalesSite;
+          });
+        }
         renderCourses(allCourses);
 
         document.getElementById("searchInput").addEventListener("input", searchCourses);
@@ -927,8 +938,9 @@
         document.getElementById("modalTitle").innerText = "Thêm Khóa Học Mới";
         form.reset();
         document.getElementById("courseId").value = "";
-        document.getElementById("courseOriginalSalesSite").value = "yeunauan";
-        document.querySelector('input[name="salesSite"][value="yeunauan"]').checked = true;
+        const createSalesSite = dualLmsRoutingEnabled ? currentDeploymentSalesSite : "yeunauan";
+        document.getElementById("courseOriginalSalesSite").value = createSalesSite;
+        document.querySelector(`input[name="salesSite"][value="${createSalesSite}"]`).checked = true;
         document.getElementById("courseActiveInput").checked = true;
         document.getElementById("courseSortOrderInput").value = 0;
         document.getElementById("courseExpectedStartDateInput").value = "";

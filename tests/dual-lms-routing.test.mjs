@@ -49,6 +49,8 @@ test("admin filters targets and emits LMS deep link", () => {
   assert.match(html, /id="openLmsAdminLink"/);
   assert.match(html, /LIÊN KẾT DÙNG CHUNG CŨ/);
   assert.match(html, /www\.daubepnho\.store\/lms-admin\.html\?lms=/);
+  assert.match(html, /X-Commerce-Dual-Lms-Routing/);
+  assert.match(html, /radio\.disabled = radio\.value !== deploymentSalesSite/);
 });
 
 test("backend persists lms_tenant and returns explicit cross-site error code", () => {

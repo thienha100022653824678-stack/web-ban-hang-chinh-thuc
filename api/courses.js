@@ -3,6 +3,7 @@ import { warmRuntimeConfig } from "../utils/v2-runtime-controller.js";
 import {
   buildCourseSalesUrl,
   effectiveSalesSite,
+  getDeploymentSalesSite,
   requireSalesSite
 } from "../utils/sales-site.js";
 import { fixtureCourses, fixtureSaveCourse, isPreviewFixture } from "../utils/preview-fixture.js";
@@ -72,6 +73,8 @@ export default async function handler(req, res) {
   try {
     const dualRoutingEnabled = isCommerceDualLmsRoutingEnabled();
     if (req.method === "GET") {
+      res.setHeader("X-Sales-Site", getDeploymentSalesSite());
+      res.setHeader("X-Commerce-Dual-Lms-Routing", dualRoutingEnabled ? "enabled" : "disabled");
       if (isPreviewFixture()) {
         const rows = fixtureCourses();
         const bySlug = new Map(rows.map((course) => [course.slug, course]));
