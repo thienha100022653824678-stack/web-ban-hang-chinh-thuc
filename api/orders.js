@@ -3,6 +3,24 @@ import { warmRuntimeConfig } from "../utils/v2-runtime-controller.js";
 import { effectiveSalesSite } from "../utils/sales-site.js";
 import { fixtureOrders, fixtureUpdateOrder, isPreviewFixture } from "../utils/preview-fixture.js";
 import { getEffectiveLearningSlug, hasAnotherGrantingOrder } from "../utils/learning-course.js";
+import {
+  CommerceLmsTenantError,
+  isCommerceDualLmsRoutingEnabled,
+  resolveOrderLmsTenant
+} from "../utils/lms-tenant.js";
+
+async function withEffectiveLmsTenant(order) {
+  if (!isCommerceDualLmsRoutingEnabled()) return order;
+  const { data: courses, error } = await supabase
+    .from("courses")
+    .select("id,slug,sales_site,learning_course_slug,lms_tenant,active");
+  if (error) throw error;
+  const bySlug = new Map((courses || []).map((course) => [course.slug, course]));
+  const effective_lms_tenant = await resolveOrderLmsTenant(order, {
+    findCourseBySlug: async (slug) => bySlug.get(slug) || null
+  });
+  return { ...order, effective_lms_tenant };
+}
 
 export default async function handler(req, res) {
   // CORS headers
@@ -114,7 +132,7 @@ export default async function handler(req, res) {
         const sharedGrant = actionType === "revoke" && await hasAnotherGrantingOrder(supabase, order);
         const syncResults = sharedGrant
           ? { lms: "SHARED_ENTITLEMENT_RETAINED", portal: "SHARED_ENTITLEMENT_RETAINED", error: null }
-          : await syncEnrollmentToExternalSystems(order, actionType);
+          : await syncEnrollmentToExternalSystems(await withEffectiveLmsTenant(order), actionType);
 
         // Update database with sync status
         const { data: updatedOrder, error: updateErr } = await supabase
@@ -179,7 +197,7 @@ export default async function handler(req, res) {
           });
           syncResults = sharedGrant
             ? { lms: "SHARED_ENTITLEMENT_RETAINED", portal: "SHARED_ENTITLEMENT_RETAINED", error: null }
-            : await syncEnrollmentToExternalSystems(data, actionType);
+            : await syncEnrollmentToExternalSystems(await withEffectiveLmsTenant(data), actionType);
 
           // Update database with sync status and get the updated record
           const { data: finalData } = await supabase
@@ -205,7 +223,10 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: "Method not allowed" });
   } catch (error) {
     console.error("ORDERS_API_ERROR:", error);
-    return res.status(500).json({ error: error.message });
+    return res.status(error instanceof CommerceLmsTenantError ? error.status : 500).json({
+      error: error.message,
+      code: error.code
+    });
   }
 }
 

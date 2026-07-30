@@ -5,6 +5,7 @@ import {
   isV2OutboxShadowMode
 } from "./v2-outbox.js";
 import { getEffectiveLearningSlug } from "./learning-course.js";
+import { isCommerceDualLmsRoutingEnabled } from "./lms-tenant.js";
 
 function isExternalDryRun() {
   return String(process.env.EXTERNAL_SYNC_MODE || "").trim().toLowerCase() === "dry-run";
@@ -56,7 +57,8 @@ export async function syncCourseToExternalSystems(courseData) {
     imageUrl: courseData.imageUrl || courseData.image_url || "",
     active: courseData.active !== undefined ? courseData.active : true,
     isPublished: !!courseData.is_published,
-    teacher: courseData.teacher_name || ""
+    teacher: courseData.teacher_name || "",
+    ...(isCommerceDualLmsRoutingEnabled() ? { lmsTenant: courseData.lms_tenant } : {})
   };
   if (Object.prototype.hasOwnProperty.call(courseData, "expected_start_date")) {
     dryRunCoursePayload.expected_start_date = courseData.expected_start_date;
@@ -112,7 +114,8 @@ export async function syncCourseToExternalSystems(courseData) {
     imageUrl: courseData.imageUrl || courseData.image_url || "",
     active: courseData.active !== undefined ? courseData.active : true,
     isPublished: isPublished,
-    teacher: courseData.teacher_name || ""
+    teacher: courseData.teacher_name || "",
+    ...(isCommerceDualLmsRoutingEnabled() ? { lmsTenant: courseData.lms_tenant } : {})
   };
   const hasExpectedStartDate = Object.prototype.hasOwnProperty.call(courseData, "expected_start_date");
   if (hasExpectedStartDate) {
@@ -206,11 +209,25 @@ export async function syncEnrollmentToExternalSystems(orderData, actionType) {
     return results;
   }
 
-  const payload = { action, email, courseSlug };
+  const lmsTenant = String(orderData.lms_tenant || orderData.effective_lms_tenant || "").trim();
+  if (isCommerceDualLmsRoutingEnabled() && !lmsTenant) {
+    return {
+      lms: "FAILED",
+      portal: "SKIPPED",
+      error: "UNRESOLVED_LMS_TENANT"
+    };
+  }
+  const lmsPayload = {
+    action,
+    email,
+    courseSlug,
+    ...(isCommerceDualLmsRoutingEnabled() ? { lmsTenant } : {})
+  };
+  const portalPayload = { action, email, courseSlug };
   if (isExternalDryRun()) {
     return dryRunResult(action, courseSlug, {
-      lms: payload,
-      portal: payload
+      lms: lmsPayload,
+      portal: portalPayload
     });
   }
 
@@ -239,7 +256,7 @@ export async function syncEnrollmentToExternalSystems(orderData, actionType) {
           "Content-Type": "application/json",
           "X-Sync-Secret": secret
         },
-        body: JSON.stringify({ action, email, courseSlug })
+        body: JSON.stringify(lmsPayload)
       });
       if (res.ok) {
         results.lms = "SUCCESS";
@@ -263,7 +280,7 @@ export async function syncEnrollmentToExternalSystems(orderData, actionType) {
           "Content-Type": "application/json",
           "X-Sync-Secret": secret
         },
-        body: JSON.stringify({ action, email, courseSlug })
+        body: JSON.stringify(portalPayload)
       });
       if (res.ok) {
         const resData = await res.json().catch(() => ({}));

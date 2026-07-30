@@ -8,6 +8,11 @@ import {
 } from "../utils/sales-site.js";
 import { fixtureRegister, isPreviewFixture } from "../utils/preview-fixture.js";
 import { resolveLearningCourseFromSupabase, snapshotOrderLearningSlug } from "../utils/learning-course.js";
+import {
+  CommerceLmsTenantError,
+  isCommerceDualLmsRoutingEnabled,
+  resolveCourseLmsTenant
+} from "../utils/lms-tenant.js";
 
 function normalizeIdempotencyKey(req) {
   const value = req.headers["idempotency-key"] || req.body?.idempotencyKey;
@@ -45,6 +50,7 @@ export default async function handler(req, res) {
 
     const courseSlug = course || "donut";
     const salesSite = getDeploymentSalesSite();
+    const dualRoutingEnabled = isCommerceDualLmsRoutingEnabled();
     const siteConfig = getSalesSiteConfig(salesSite);
     if (isPreviewFixture()) {
       const result = fixtureRegister({ ...req.body, course: courseSlug }, idempotencyKey);
@@ -81,7 +87,9 @@ export default async function handler(req, res) {
 
     let courseQuery = supabase
       .from("courses")
-      .select("id, slug, image_url, title, price, sales_site, learning_course_slug")
+      .select(dualRoutingEnabled
+        ? "id, slug, image_url, title, price, sales_site, learning_course_slug, lms_tenant, active"
+        : "id, slug, image_url, title, price, sales_site, learning_course_slug")
       .eq("slug", courseSlug)
       .eq("active", true);
     courseQuery = applyCourseTenantFilter(courseQuery, salesSite);
@@ -95,6 +103,24 @@ export default async function handler(req, res) {
       ...courseRec,
       learning_course_slug: learning.learningSlug
     });
+    let lmsTenant = null;
+    if (dualRoutingEnabled) {
+      const { data: allCourses, error: allCoursesError } = await supabase
+        .from("courses")
+        .select("id,slug,sales_site,learning_course_slug,lms_tenant,active");
+      if (allCoursesError) throw allCoursesError;
+      const bySlug = new Map((allCourses || []).map((item) => [item.slug, item]));
+      lmsTenant = await resolveCourseLmsTenant(courseRec, {
+        findCourseBySlug: async (slug) => bySlug.get(slug) || null
+      });
+      if (lmsTenant !== salesSite) {
+        throw new CommerceLmsTenantError(
+          "LEGACY_SHARED_MAPPING_READ_ONLY",
+          "Liên kết dùng chung cũ không nhận đơn mới khi Dual LMS bật",
+          409
+        );
+      }
+    }
 
     const finalCourseName = courseRec.title;
     const thumbnail = courseRec.image_url || "";
@@ -124,6 +150,7 @@ export default async function handler(req, res) {
         course_slug: courseSlug,
         course_title: finalCourseName,
         learning_course_slug: learningCourseSlug,
+        ...(dualRoutingEnabled ? { lms_tenant: lmsTenant } : {}),
         customer_email: gmail,
         proof_image_url: billLink,
         status: "Chờ duyệt",
@@ -195,8 +222,9 @@ export default async function handler(req, res) {
   } catch (error) {
     console.error("REGISTER_ERROR:", error);
 
-    return res.status(500).json({
-      error: error.message
+    return res.status(error instanceof CommerceLmsTenantError ? error.status : 500).json({
+      error: error.message,
+      code: error.code
     });
   }
 }
