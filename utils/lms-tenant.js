@@ -1,4 +1,4 @@
-import { effectiveSalesSite, requireSalesSite } from "./sales-site.js";
+import { effectiveSalesSite, getDeploymentSalesSite, requireSalesSite } from "./sales-site.js";
 import { getEffectiveLearningSlug } from "./learning-course.js";
 
 export const LMS_TENANTS = Object.freeze(["yeunauan", "yeubep"]);
@@ -26,6 +26,19 @@ export function requireLmsTenant(value) {
     throw new CommerceLmsTenantError("INVALID_LMS_TENANT", "LMS tenant không hợp lệ", 400);
   }
   return tenant;
+}
+
+export function requireDeploymentLmsTenant(value) {
+  const requested = requireSalesSite(value);
+  const deployed = getDeploymentSalesSite();
+  if (requested !== deployed) {
+    throw new CommerceLmsTenantError(
+      "COURSE_LMS_TENANT_MISMATCH",
+      "Website bán hàng không khớp LMS tenant của deployment",
+      403
+    );
+  }
+  return deployed;
 }
 
 async function resolveCourseLmsTenantInternal(course, { findCourseBySlug }, visited) {

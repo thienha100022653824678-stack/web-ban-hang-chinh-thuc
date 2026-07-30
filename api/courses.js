@@ -15,6 +15,7 @@ import {
 import {
   CommerceLmsTenantError,
   isCommerceDualLmsRoutingEnabled,
+  requireDeploymentLmsTenant,
   resolveCourseLmsTenant,
   validateSameTenantLearningTarget
 } from "../utils/lms-tenant.js";
@@ -173,7 +174,9 @@ export default async function handler(req, res) {
       if (!slug || (!courseName && !title)) {
         return res.status(400).json({ error: "Thiếu thông tin bắt buộc (slug, title)" });
       }
-      const salesSite = requireSalesSite(sales_site);
+      const salesSite = dualRoutingEnabled
+        ? requireDeploymentLmsTenant(sales_site)
+        : requireSalesSite(sales_site);
       const storedLearning = storedLearningSlug(slug, learning_course_slug);
       const learning = await validateLearningTarget({ slug, active: active !== false, learning_course_slug: storedLearning });
       let lmsTenant = null;
@@ -285,9 +288,12 @@ export default async function handler(req, res) {
       if (isPreviewFixture()) {
         const current = fixtureCourses().find((course) => course.id === id);
         if (!current) return res.status(404).json({ error: "Không tìm thấy khóa học" });
-        const salesSite = requireSalesSite(
-          Object.prototype.hasOwnProperty.call(req.body, "sales_site") ? sales_site : effectiveSalesSite(current)
-        );
+        const requestedSalesSite = Object.prototype.hasOwnProperty.call(req.body, "sales_site")
+          ? sales_site
+          : effectiveSalesSite(current);
+        const salesSite = dualRoutingEnabled
+          ? requireDeploymentLmsTenant(requestedSalesSite)
+          : requireSalesSite(requestedSalesSite);
         const nextSlug = slug || current.slug;
         const storedLearning = storedLearningSlug(nextSlug,
           Object.prototype.hasOwnProperty.call(req.body, "learning_course_slug") ? learning_course_slug : current.learning_course_slug);
@@ -334,11 +340,12 @@ export default async function handler(req, res) {
       if (!existingCourse) {
         return res.status(404).json({ error: "Không tìm thấy khóa học" });
       }
-      const salesSite = requireSalesSite(
-        Object.prototype.hasOwnProperty.call(req.body, "sales_site")
-          ? sales_site
-          : effectiveSalesSite(existingCourse)
-      );
+      const requestedSalesSite = Object.prototype.hasOwnProperty.call(req.body, "sales_site")
+        ? sales_site
+        : effectiveSalesSite(existingCourse);
+      const salesSite = dualRoutingEnabled
+        ? requireDeploymentLmsTenant(requestedSalesSite)
+        : requireSalesSite(requestedSalesSite);
 
       const existingRawData = existingCourse?.raw_data || {};
       const nextSlug = slug || existingCourse.slug;

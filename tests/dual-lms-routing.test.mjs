@@ -3,6 +3,7 @@ import fs from "node:fs";
 import test from "node:test";
 import {
   isCommerceDualLmsRoutingEnabled,
+  requireDeploymentLmsTenant,
   requireLmsTenant,
   resolveCourseLmsTenant,
   validateSameTenantLearningTarget
@@ -63,6 +64,20 @@ test("invalid explicit LMS tenant uses the stable INVALID_LMS_TENANT contract", 
   assert.throws(() => requireLmsTenant("forged"), (error) =>
     error.code === "INVALID_LMS_TENANT" && error.status === 400
   );
+});
+
+test("feature-on course writes are bound to the deployment SALES_SITE", () => {
+  const previous = process.env.SALES_SITE;
+  process.env.SALES_SITE = "yeunauan";
+  try {
+    assert.equal(requireDeploymentLmsTenant("yeunauan"), "yeunauan");
+    assert.throws(() => requireDeploymentLmsTenant("yeubep"), (error) =>
+      error.code === "COURSE_LMS_TENANT_MISMATCH" && error.status === 403
+    );
+  } finally {
+    if (previous === undefined) delete process.env.SALES_SITE;
+    else process.env.SALES_SITE = previous;
+  }
 });
 
 test("new orders snapshot server-resolved LMS tenant and reject legacy cross-LMS aliases", () => {
