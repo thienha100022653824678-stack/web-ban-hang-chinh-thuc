@@ -57,6 +57,7 @@ test("backend persists lms_tenant and returns explicit cross-site error code", (
   assert.match(api, /CROSS_LMS_TARGET_FORBIDDEN|validateSameTenantLearningTarget/);
   assert.match(api, /LEGACY_SHARED_MAPPING_READ_ONLY/);
   assert.match(api, /COURSE_SLUG_CONFLICT/);
+  assert.match(api, /fixtureCourses\(\)\.some\(\(course\) => course\.slug === slug\)/);
 });
 
 test("invalid explicit LMS tenant uses the stable INVALID_LMS_TENANT contract", () => {

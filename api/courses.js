@@ -174,6 +174,12 @@ export default async function handler(req, res) {
       if (!slug || (!courseName && !title)) {
         return res.status(400).json({ error: "Thiếu thông tin bắt buộc (slug, title)" });
       }
+      if (isPreviewFixture() && fixtureCourses().some((course) => course.slug === slug)) {
+        return res.status(409).json({
+          error: "Slug khóa học đã tồn tại. Hãy dùng suffix -yeubep hoặc -yeunauan.",
+          code: "COURSE_SLUG_CONFLICT"
+        });
+      }
       const salesSite = dualRoutingEnabled
         ? requireDeploymentLmsTenant(sales_site)
         : requireSalesSite(sales_site);
