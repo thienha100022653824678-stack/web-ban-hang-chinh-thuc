@@ -184,7 +184,6 @@ export default async function handler(req, res) {
         ? requireDeploymentLmsTenant(sales_site)
         : requireSalesSite(sales_site);
       const storedLearning = storedLearningSlug(slug, learning_course_slug);
-      const learning = await validateLearningTarget({ slug, active: active !== false, learning_course_slug: storedLearning });
       let lmsTenant = null;
       if (dualRoutingEnabled) {
         const candidate = { slug, sales_site: salesSite, learning_course_slug: storedLearning, lms_tenant: salesSite };
@@ -195,6 +194,7 @@ export default async function handler(req, res) {
         });
         lmsTenant = validated.lmsTenant;
       }
+      const learning = await validateLearningTarget({ slug, active: active !== false, learning_course_slug: storedLearning });
       if (isPreviewFixture()) {
         const row = fixtureSaveCourse({ ...req.body, sales_site: salesSite, learning_course_slug: storedLearning, lms_tenant: lmsTenant, learning_lesson_count: learning.lessonCount });
         return res.status(201).json({ success: true, data: row, fixture: true });
@@ -303,7 +303,6 @@ export default async function handler(req, res) {
         const nextSlug = slug || current.slug;
         const storedLearning = storedLearningSlug(nextSlug,
           Object.prototype.hasOwnProperty.call(req.body, "learning_course_slug") ? learning_course_slug : current.learning_course_slug);
-        const learning = await validateLearningTarget({ ...current, slug: nextSlug, learning_course_slug: storedLearning });
         let lmsTenant = current.lms_tenant || null;
         if (dualRoutingEnabled) {
           const rows = fixtureCourses();
@@ -330,6 +329,7 @@ export default async function handler(req, res) {
           }
           lmsTenant = validated.legacyShared ? (current.lms_tenant || null) : validated.lmsTenant;
         }
+        const learning = await validateLearningTarget({ ...current, slug: nextSlug, learning_course_slug: storedLearning });
         const row = fixtureSaveCourse({ ...req.body, sales_site: salesSite, learning_course_slug: storedLearning, lms_tenant: lmsTenant, learning_lesson_count: learning.lessonCount });
         return res.status(200).json({ success: true, data: row, fixture: true });
       }
@@ -357,7 +357,6 @@ export default async function handler(req, res) {
       const nextSlug = slug || existingCourse.slug;
       const storedLearning = storedLearningSlug(nextSlug,
         Object.prototype.hasOwnProperty.call(req.body, "learning_course_slug") ? learning_course_slug : existingCourse.learning_course_slug);
-      await validateLearningTarget({ ...existingCourse, slug: nextSlug, learning_course_slug: storedLearning });
       let lmsTenant = existingCourse.lms_tenant || null;
       if (dualRoutingEnabled) {
         const { data: allCourses, error: allCoursesError } = await supabase.from("courses").select("*");
@@ -385,6 +384,7 @@ export default async function handler(req, res) {
         }
         lmsTenant = validated.legacyShared ? (existingCourse.lms_tenant || null) : validated.lmsTenant;
       }
+      await validateLearningTarget({ ...existingCourse, slug: nextSlug, learning_course_slug: storedLearning });
       const nextImageUrl = String(imageUrl || "").trim();
       const hasExpectedStartDate = Object.prototype.hasOwnProperty.call(req.body, "expected_start_date");
 
