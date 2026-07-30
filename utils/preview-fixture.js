@@ -144,6 +144,19 @@ export function fixtureRegister(input, key) {
   if (duplicate) return { duplicate: true, order: duplicate };
   const course = fixturePublicCourse(input.course || "donut");
   if (!course) return { error: "Không tìm thấy khóa học thuộc website này" };
+  let lmsTenant = null;
+  if (String(process.env.COMMERCE_DUAL_LMS_ROUTING_ENABLED || "").toLowerCase() === "true") {
+    const targetSlug = getEffectiveLearningSlug(course);
+    const target = state.courses.find((candidate) => candidate.slug === targetSlug);
+    if (!target) return { error: "Không resolve được LMS target", code: "UNRESOLVED_LMS_TENANT" };
+    lmsTenant = String(target.lms_tenant || target.sales_site || "yeunauan").trim();
+    if (lmsTenant !== site) {
+      return {
+        error: "Liên kết dùng chung cũ không nhận đơn mới khi Dual LMS bật",
+        code: "LEGACY_SHARED_MAPPING_READ_ONLY"
+      };
+    }
+  }
   const order = {
     id: randomUUID(),
     course_slug: course.slug,
@@ -152,6 +165,7 @@ export function fixtureRegister(input, key) {
     customer_email: input.gmail,
     status: "Chờ duyệt",
     sales_site: site,
+    ...(lmsTenant ? { lms_tenant: lmsTenant } : {}),
     sales_host: getSalesSiteConfig(site).host,
     price_snapshot: course.price || "",
     idempotency_key: key,

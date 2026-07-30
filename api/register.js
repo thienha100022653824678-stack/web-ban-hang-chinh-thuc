@@ -54,7 +54,7 @@ export default async function handler(req, res) {
     const siteConfig = getSalesSiteConfig(salesSite);
     if (isPreviewFixture()) {
       const result = fixtureRegister({ ...req.body, course: courseSlug }, idempotencyKey);
-      if (result.error) return res.status(404).json({ error: result.error });
+      if (result.error) return res.status(result.code ? 409 : 404).json({ error: result.error, code: result.code });
       return res.status(200).json({
         success: true,
         duplicate: result.duplicate,
@@ -63,7 +63,8 @@ export default async function handler(req, res) {
         file: result.order.proof_image_url,
         course: result.order.course_slug,
         courseName: result.order.course_title,
-        learningCourseSlug: result.order.learning_course_slug
+        learningCourseSlug: result.order.learning_course_slug,
+        lmsTenant: result.order.lms_tenant
       });
     }
 

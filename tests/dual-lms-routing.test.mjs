@@ -89,3 +89,12 @@ test("feature-off database selects do not require the additive tenant column", (
     assert.match(source, /(?:dualRoutingEnabled|isCommerceDualLmsRoutingEnabled\(\))[\s\S]{0,120}\?/);
   }
 });
+
+test("Preview fixture snapshots tenant and rejects a legacy cross-LMS order", () => {
+  const fixture = fs.readFileSync(new URL("../utils/preview-fixture.js", import.meta.url), "utf8");
+  const register = fs.readFileSync(new URL("../api/register.js", import.meta.url), "utf8");
+  assert.match(fixture, /COMMERCE_DUAL_LMS_ROUTING_ENABLED/);
+  assert.match(fixture, /LEGACY_SHARED_MAPPING_READ_ONLY/);
+  assert.match(fixture, /lms_tenant:\s*lmsTenant/);
+  assert.match(register, /lmsTenant:\s*result\.order\.lms_tenant/);
+});
